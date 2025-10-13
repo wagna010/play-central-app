@@ -155,13 +155,7 @@ const Filmes = () => {
     if (focusSection === 'categories' && categoryRefs.current[focusIndex]) {
       categoryRefs.current[focusIndex]?.scrollIntoView({
         behavior: 'smooth',
-        block: 'nearest',
-        inline: 'nearest'
-      });
-    } else if (focusSection === 'movies' && movieRefs.current[focusIndex]) {
-      movieRefs.current[focusIndex]?.scrollIntoView({
-        behavior: 'smooth',
-        block: 'nearest',
+        block: 'center',
         inline: 'nearest'
       });
     }
@@ -473,8 +467,7 @@ const Filmes = () => {
   return (
     <div className="flex h-screen bg-black text-white overflow-hidden">
       {/* Sidebar */}
-      <div className="w-[460px] bg-black/75 border-r-2 border-white/10 p-5 overflow-y-auto flex flex-col scroll-smooth
-                      [&::-webkit-scrollbar]:w-[6px] [&::-webkit-scrollbar-thumb]:bg-white/20 [&::-webkit-scrollbar-thumb]:rounded-[3px]">
+      <div className="w-[460px] bg-black/75 border-r-2 border-white/10 p-5 overflow-y-auto scrollbar-none flex flex-col scroll-smooth">
         <input
           ref={searchBoxRef}
           type="text"
