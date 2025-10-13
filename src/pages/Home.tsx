@@ -96,28 +96,14 @@ const Home = () => {
     const server = JSON.parse(localStorage.getItem('server_info') || '{}');
     const base = `http://${server.url}:${server.port}/player_api.php?username=${user.username}&password=${user.password}`;
     
-    try {
-      const [cat, str] = await Promise.all([
-        fetch(`${base}&action=get_live_categories`),
-        fetch(`${base}&action=get_live_streams`)
-      ]);
-      
-      localStorage.setItem('tv_categories', JSON.stringify(await cat.json()));
-      localStorage.setItem('tv_streams', JSON.stringify(await str.json()));
-      localStorage.setItem('tv_last_update', agora.toString());
-      
-      // Tentar buscar EPG XML (pode falhar por CORS)
-      try {
-        const xmlResp = await fetch(`http://${server.url}:${server.port}/xmltv.php?username=${user.username}&password=${user.password}`);
-        const xmlText = await xmlResp.text();
-        localStorage.setItem('tv_epg_xml', xmlText);
-        console.log('✅ EPG XML carregado com sucesso');
-      } catch (xmlErr) {
-        console.warn('⚠️ EPG XML não disponível (CORS):', xmlErr);
-      }
-    } catch (err) {
-      console.error('Erro ao atualizar listas de TV:', err);
-    }
+    const [cat, str] = await Promise.all([
+      fetch(`${base}&action=get_live_categories`),
+      fetch(`${base}&action=get_live_streams`)
+    ]);
+    
+    localStorage.setItem('tv_categories', JSON.stringify(await cat.json()));
+    localStorage.setItem('tv_streams', JSON.stringify(await str.json()));
+    localStorage.setItem('tv_last_update', agora.toString());
   };
 
   const handleMenuClick = async (type: string) => {
