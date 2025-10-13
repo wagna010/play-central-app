@@ -46,10 +46,14 @@ const Filmes = () => {
   const [playerActive, setPlayerActive] = useState(false);
   const [pauseMenuVisible, setPauseMenuVisible] = useState(false);
   const [pauseFocus, setPauseFocus] = useState<'continue' | 'close'>('continue');
+  const [isFav, setIsFav] = useState<boolean>(false);
+  const [hlsReady, setHlsReady] = useState(false);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const hlsRef = useRef<any>(null);
   const searchBoxRef = useRef<HTMLInputElement>(null);
+  const categoryRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const movieRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   useEffect(() => {
     let cats = JSON.parse(localStorage.getItem('vod_categories') || '[]');
@@ -96,6 +100,14 @@ const Filmes = () => {
     return isNaN(num) ? 'N/A' : num.toFixed(1);
   };
 
+  const normalizeText = (text: string): string => {
+    return text
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .trim();
+  };
+
   const loadMovies = (categoryId: string, movieList: Movie[]) => {
     const favIds = JSON.parse(localStorage.getItem('fav_movies') || '[]');
     
@@ -120,8 +132,10 @@ const Filmes = () => {
   };
 
   const applySearch = () => {
-    const term = searchTerm.toLowerCase().trim();
-    const filtered = movies.filter(m => (m.name || '').toLowerCase().includes(term));
+    const normalizedTerm = normalizeText(searchTerm);
+    const filtered = movies.filter(m => 
+      normalizeText(m.name || '').includes(normalizedTerm)
+    );
     setFilteredMovies(filtered);
     setFocusSection('movies');
     setFocusIndex(0);
@@ -135,10 +149,31 @@ const Filmes = () => {
     }
   }, [searchTerm]);
 
+  useEffect(() => {
+    if (overlayActive || playerActive) return;
+    
+    if (focusSection === 'categories' && categoryRefs.current[focusIndex]) {
+      categoryRefs.current[focusIndex]?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest',
+        inline: 'nearest'
+      });
+    } else if (focusSection === 'movies' && movieRefs.current[focusIndex]) {
+      movieRefs.current[focusIndex]?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest',
+        inline: 'nearest'
+      });
+    }
+  }, [focusIndex, focusSection, overlayActive, playerActive]);
+
   const openMoviePopup = async (movie: Movie) => {
     setMovieBasic(movie);
     setOverlayActive(true);
     setOverlayFocus('back');
+    
+    const favs = JSON.parse(localStorage.getItem('fav_movies') || '[]');
+    setIsFav(favs.includes(movie.stream_id));
 
     try {
       const url = `${baseURL}/player_api.php?username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}&action=get_vod_info&vod_id=${movie.stream_id}`;
@@ -183,6 +218,12 @@ const Filmes = () => {
 
   const openPlayer = () => {
     const src = getVodUrl();
+    console.log('=== 🎬 PLAYER DEBUG ===');
+    console.log('URL:', src);
+    console.log('HLS Ready:', hlsReady);
+    console.log('HLS Available:', !!(window as any).Hls);
+    console.log('Extension:', movieInfo?.info?.container_extension || movieInfo?.movie_data?.container_extension || 'mp4');
+    
     setPlayerActive(true);
     setPauseMenuVisible(false);
 
@@ -192,15 +233,43 @@ const Filmes = () => {
     }
 
     const isHLS = src.endsWith('.m3u8');
-    if (isHLS && (window as any).Hls && (window as any).Hls.isSupported()) {
-      const hls = new (window as any).Hls({ lowLatencyMode: true, enableWorker: true });
+    console.log('É HLS?', isHLS);
+    
+    if (isHLS && hlsReady && (window as any).Hls && (window as any).Hls.isSupported()) {
+      console.log('🎥 Usando HLS.js');
+      const hls = new (window as any).Hls({ 
+        lowLatencyMode: true, 
+        enableWorker: true,
+        debug: false
+      });
+      
+      hls.on((window as any).Hls.Events.ERROR, (event: any, data: any) => {
+        console.error('❌ HLS Error:', data);
+        if (data.fatal) {
+          console.error('💥 Fatal error, tipo:', data.type);
+        }
+      });
+      
       hls.loadSource(src);
       hls.attachMedia(videoRef.current!);
-      hls.on((window as any).Hls.Events.MANIFEST_PARSED, () => videoRef.current?.play().catch(() => {}));
+      hls.on((window as any).Hls.Events.MANIFEST_PARSED, () => {
+        console.log('✅ Manifest parseado, iniciando reprodução...');
+        videoRef.current?.play()
+          .then(() => console.log('▶️ Reprodução iniciada com sucesso!'))
+          .catch((err) => console.error('❌ Erro ao reproduzir:', err));
+      });
       hlsRef.current = hls;
     } else if (videoRef.current) {
+      console.log('🎥 Usando player nativo (fallback)');
       videoRef.current.src = src;
-      videoRef.current.play().catch(() => {});
+      videoRef.current.play()
+        .then(() => console.log('▶️ Reprodução nativa iniciada!'))
+        .catch((err) => {
+          console.error('❌ Erro ao reproduzir nativo:', err);
+          alert('Erro ao reproduzir vídeo. Verifique o console para detalhes.');
+        });
+    } else {
+      console.error('❌ videoRef.current não disponível');
     }
   };
 
@@ -224,19 +293,16 @@ const Filmes = () => {
     const idx = favs.indexOf(movieBasic.stream_id);
     if (idx >= 0) {
       favs.splice(idx, 1);
+      setIsFav(false);
     } else {
       favs.push(movieBasic.stream_id);
+      setIsFav(true);
     }
     localStorage.setItem('fav_movies', JSON.stringify(favs));
 
     if (currentCategory?.category_id === 'favorites') {
       loadMovies('favorites', movies);
     }
-  };
-
-  const isFavorite = () => {
-    const favs = JSON.parse(localStorage.getItem('fav_movies') || '[]');
-    return favs.includes(movieBasic?.stream_id);
   };
 
   useEffect(() => {
@@ -374,9 +440,18 @@ const Filmes = () => {
     const script = document.createElement('script');
     script.src = 'https://cdn.jsdelivr.net/npm/hls.js@latest';
     script.async = true;
+    script.onload = () => {
+      console.log('✅ HLS.js carregado com sucesso');
+      setHlsReady(true);
+    };
+    script.onerror = () => {
+      console.error('❌ Erro ao carregar HLS.js');
+    };
     document.body.appendChild(script);
     return () => {
-      document.body.removeChild(script);
+      if (document.body.contains(script)) {
+        document.body.removeChild(script);
+      }
     };
   }, []);
 
@@ -419,6 +494,7 @@ const Filmes = () => {
             return (
               <div
                 key={cat.category_id}
+                ref={(el) => categoryRefs.current[index] = el}
                 onClick={() => selectCategory(index)}
                 className={`p-4 px-5 rounded-lg mb-3 cursor-pointer text-2xl flex justify-between items-center transition-all
                            ${isActive && isFocused ? 'border-[6px] border-[#6F61EF] bg-[rgba(112,99,235,0.35)] text-white font-bold' :
@@ -444,6 +520,7 @@ const Filmes = () => {
             return (
               <div
                 key={movie.stream_id}
+                ref={(el) => movieRefs.current[i] = el}
                 onClick={() => openMoviePopup(movie)}
                 className={`relative bg-black/65 rounded-[10px] overflow-hidden cursor-pointer w-[350px] h-[485px] transition-all
                            ${isFocused ? 'border-[6px] border-[#6F61EF]' : 'border-[6px] border-transparent'}`}
@@ -511,7 +588,7 @@ const Filmes = () => {
                     className={`flex-[0_0_200px] text-center bg-white/[0.08] rounded-[14px] text-white px-[26px] py-[14px] text-xl cursor-pointer transition-all
                                ${overlayFocus === 'fav' ? 'border-[6px] border-[#6F61EF]' : 'border-[6px] border-transparent'}`}
                   >
-                    {isFavorite() ? '💔 Remover' : '⭐ Favoritar'}
+                    {isFav ? '💔 Remover' : '⭐ Favoritar'}
                   </button>
                 </div>
               </div>
@@ -541,7 +618,24 @@ const Filmes = () => {
           {playerActive && (
             <div className="fixed inset-0 bg-black/[0.96] flex items-center justify-center z-[150]">
               <div className="relative w-screen h-screen bg-black overflow-hidden">
-                <video ref={videoRef} className="w-full h-full object-contain bg-black" playsInline />
+                <video 
+                  ref={videoRef} 
+                  className="w-full h-full object-contain bg-black" 
+                  playsInline
+                  controls
+                  onError={(e) => {
+                    console.error('❌ Video error event:', e);
+                    const video = e.currentTarget as HTMLVideoElement;
+                    if (video.error) {
+                      console.error('❌ Video error code:', video.error.code);
+                      console.error('❌ Video error message:', video.error.message);
+                    }
+                  }}
+                  onLoadStart={() => console.log('📥 Vídeo começando a carregar...')}
+                  onCanPlay={() => console.log('✅ Vídeo pronto para reproduzir')}
+                  onPlaying={() => console.log('▶️ Vídeo reproduzindo')}
+                  onWaiting={() => console.log('⏳ Vídeo em buffer...')}
+                />
                 
                 {/* Pause Menu */}
                 {pauseMenuVisible && (
