@@ -96,18 +96,13 @@ const Home = () => {
     const server = JSON.parse(localStorage.getItem('server_info') || '{}');
     const base = `http://${server.url}:${server.port}/player_api.php?username=${user.username}&password=${user.password}`;
     
-    const [cat, str, xmlResp] = await Promise.all([
+    const [cat, str] = await Promise.all([
       fetch(`${base}&action=get_live_categories`),
-      fetch(`${base}&action=get_live_streams`),
-      fetch(`http://${server.url}:${server.port}/xmltv.php?username=${user.username}&password=${user.password}`)
+      fetch(`${base}&action=get_live_streams`)
     ]);
     
     localStorage.setItem('tv_categories', JSON.stringify(await cat.json()));
     localStorage.setItem('tv_streams', JSON.stringify(await str.json()));
-    
-    const xmlText = await xmlResp.text();
-    localStorage.setItem('tv_epg_xml', xmlText);
-    
     localStorage.setItem('tv_last_update', agora.toString());
   };
 
