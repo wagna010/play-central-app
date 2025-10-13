@@ -217,59 +217,12 @@ const Filmes = () => {
   };
 
   const openPlayer = () => {
-    const src = getVodUrl();
-    console.log('=== 🎬 PLAYER DEBUG ===');
-    console.log('URL:', src);
-    console.log('HLS Ready:', hlsReady);
-    console.log('HLS Available:', !!(window as any).Hls);
-    console.log('Extension:', movieInfo?.info?.container_extension || movieInfo?.movie_data?.container_extension || 'mp4');
-    
     setPlayerActive(true);
     setPauseMenuVisible(false);
 
     if (hlsRef.current) {
       try { hlsRef.current.destroy(); } catch {}
       hlsRef.current = null;
-    }
-
-    const isHLS = src.endsWith('.m3u8');
-    console.log('É HLS?', isHLS);
-    
-    if (isHLS && hlsReady && (window as any).Hls && (window as any).Hls.isSupported()) {
-      console.log('🎥 Usando HLS.js');
-      const hls = new (window as any).Hls({ 
-        lowLatencyMode: true, 
-        enableWorker: true,
-        debug: false
-      });
-      
-      hls.on((window as any).Hls.Events.ERROR, (event: any, data: any) => {
-        console.error('❌ HLS Error:', data);
-        if (data.fatal) {
-          console.error('💥 Fatal error, tipo:', data.type);
-        }
-      });
-      
-      hls.loadSource(src);
-      hls.attachMedia(videoRef.current!);
-      hls.on((window as any).Hls.Events.MANIFEST_PARSED, () => {
-        console.log('✅ Manifest parseado, iniciando reprodução...');
-        videoRef.current?.play()
-          .then(() => console.log('▶️ Reprodução iniciada com sucesso!'))
-          .catch((err) => console.error('❌ Erro ao reproduzir:', err));
-      });
-      hlsRef.current = hls;
-    } else if (videoRef.current) {
-      console.log('🎥 Usando player nativo (fallback)');
-      videoRef.current.src = src;
-      videoRef.current.play()
-        .then(() => console.log('▶️ Reprodução nativa iniciada!'))
-        .catch((err) => {
-          console.error('❌ Erro ao reproduzir nativo:', err);
-          alert('Erro ao reproduzir vídeo. Verifique o console para detalhes.');
-        });
-    } else {
-      console.error('❌ videoRef.current não disponível');
     }
   };
 
@@ -454,6 +407,57 @@ const Filmes = () => {
       }
     };
   }, []);
+
+  // Setup player when playerActive becomes true
+  useEffect(() => {
+    if (!playerActive || !videoRef.current) return;
+
+    const src = getVodUrl();
+    console.log('=== 🎬 PLAYER DEBUG ===');
+    console.log('URL:', src);
+    console.log('HLS Ready:', hlsReady);
+    console.log('HLS Available:', !!(window as any).Hls);
+    console.log('Extension:', movieInfo?.info?.container_extension || movieInfo?.movie_data?.container_extension || 'mp4');
+    console.log('videoRef disponível:', !!videoRef.current);
+
+    const isHLS = src.endsWith('.m3u8');
+    console.log('É HLS?', isHLS);
+    
+    if (isHLS && hlsReady && (window as any).Hls && (window as any).Hls.isSupported()) {
+      console.log('🎥 Usando HLS.js');
+      const hls = new (window as any).Hls({ 
+        lowLatencyMode: true, 
+        enableWorker: true,
+        debug: false
+      });
+      
+      hls.on((window as any).Hls.Events.ERROR, (event: any, data: any) => {
+        console.error('❌ HLS Error:', data);
+        if (data.fatal) {
+          console.error('💥 Fatal error, tipo:', data.type);
+        }
+      });
+      
+      hls.loadSource(src);
+      hls.attachMedia(videoRef.current);
+      hls.on((window as any).Hls.Events.MANIFEST_PARSED, () => {
+        console.log('✅ Manifest parseado, iniciando reprodução...');
+        videoRef.current?.play()
+          .then(() => console.log('▶️ Reprodução iniciada com sucesso!'))
+          .catch((err) => console.error('❌ Erro ao reproduzir:', err));
+      });
+      hlsRef.current = hls;
+    } else {
+      console.log('🎥 Usando player nativo (fallback)');
+      videoRef.current.src = src;
+      videoRef.current.play()
+        .then(() => console.log('▶️ Reprodução nativa iniciada!'))
+        .catch((err) => {
+          console.error('❌ Erro ao reproduzir nativo:', err);
+          alert('Erro ao reproduzir vídeo. Verifique o console para detalhes.');
+        });
+    }
+  }, [playerActive]);
 
   const info = movieInfo?.info || {};
   const name = info.name || movieBasic?.name || 'Filme';
