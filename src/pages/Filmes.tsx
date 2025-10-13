@@ -315,16 +315,10 @@ const Filmes = () => {
             setTypingMode(true);
             searchBoxRef.current?.focus();
           } else {
-            e.preventDefault();
-            e.stopPropagation();
             setTypingMode(false);
             searchBoxRef.current?.blur();
-            
-            // Delay para garantir que o teclado virtual da TV fechou completamente
-            setTimeout(() => {
-              setFocusSection("movies");
-              setFocusIndex(0);
-            }, 100);
+            setFocusSection("movies");
+            setFocusIndex(0);
             return;
           }
         } else if (e.key === "ArrowRight") {
