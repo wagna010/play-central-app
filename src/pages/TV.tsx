@@ -387,12 +387,12 @@ const TV = () => {
           className="flex-1 flex flex-col overflow-hidden"
           style={{ pointerEvents: focusPanel === 'categories' ? 'auto' : 'none' }}
         >
-          <div className="flex-1 overflow-y-auto pr-2 [&::-webkit-scrollbar]:w-[6px] [&::-webkit-scrollbar-thumb]:bg-white/15 [&::-webkit-scrollbar-thumb]:rounded-[3px]">
+          <div className="flex-1 overflow-y-auto pr-2 p-1 [&::-webkit-scrollbar]:w-[6px] [&::-webkit-scrollbar-thumb]:bg-white/15 [&::-webkit-scrollbar-thumb]:rounded-[3px]">
             <div
               onClick={() => selectCategory(null)}
               className={`bg-white/5 mb-2 rounded-lg p-3 px-4 cursor-pointer transition-all
                 ${currentCategory === null ? 'bg-[rgba(111,97,239,0.4)] text-white border-l-4 border-l-[#6F61EF] scale-[1.02]' : 'text-white border-l-4 border-l-transparent'}
-                ${focusPanel === 'categories' && focusIndex === 0 ? 'border-4 border-[#6F61EF]' : 'border-4 border-transparent'}`}
+                ${focusPanel === 'categories' && focusIndex === 0 ? 'border-4 border-[#6F61EF] m-1' : 'border-4 border-transparent m-1'}`}
             >
               Todos os Canais
             </div>
@@ -405,7 +405,7 @@ const TV = () => {
                   onClick={() => trySelectCategory(cat)}
                   className={`bg-white/5 mb-2 rounded-lg p-3 px-4 cursor-pointer transition-all
                     ${isActive ? 'bg-[rgba(111,97,239,0.4)] text-white border-l-4 border-l-[#6F61EF] scale-[1.02]' : 'text-white border-l-4 border-l-transparent'}
-                    ${isFocused ? 'border-4 border-[#6F61EF]' : 'border-4 border-transparent'}`}
+                    ${isFocused ? 'border-4 border-[#6F61EF] m-1' : 'border-4 border-transparent m-1'}`}
                 >
                   {cat.category_name}
                 </div>
