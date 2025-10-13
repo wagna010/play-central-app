@@ -48,6 +48,8 @@ const Filmes = () => {
   const [playerActive, setPlayerActive] = useState(false);
   const [pauseMenuVisible, setPauseMenuVisible] = useState(false);
   const [pauseFocus, setPauseFocus] = useState<"continue" | "close">("continue");
+  const [playerMode, setPlayerMode] = useState<"movie" | "trailer">("movie");
+  const [trailerUrl, setTrailerUrl] = useState<string>("");
   const [isFav, setIsFav] = useState<boolean>(false);
   const [hlsReady, setHlsReady] = useState(false);
 
@@ -237,11 +239,13 @@ const Filmes = () => {
     return `${baseURL}/movie/${encodeURIComponent(username)}/${encodeURIComponent(password)}/${streamId}.${ext}`;
   };
 
-  const openPlayer = () => {
+  const openPlayer = (mode: "movie" | "trailer" = "movie") => {
+    setPlayerMode(mode);
     setPlayerActive(true);
     setPauseMenuVisible(false);
 
-    if (hlsRef.current) {
+    // Só destrói HLS se for modo filme
+    if (mode === "movie" && hlsRef.current) {
       try {
         hlsRef.current.destroy();
       } catch {}
@@ -264,6 +268,10 @@ const Filmes = () => {
     setPauseMenuVisible(false);
     setPlayerActive(false);
     setOverlayFocus("back");
+    
+    // Limpar trailer
+    setTrailerUrl("");
+    setPlayerMode("movie");
   };
 
   const toggleFavorite = () => {
@@ -286,8 +294,9 @@ const Filmes = () => {
   const openTrailer = () => {
     if (trailers.length > 0) {
       const trailer = trailers[0];
-      const youtubeUrl = `https://www.youtube.com/watch?v=${trailer.key}`;
-      window.open(youtubeUrl, '_blank');
+      const embedUrl = `https://www.youtube.com/embed/${trailer.key}?autoplay=1&rel=0&modestbranding=1`;
+      setTrailerUrl(embedUrl);
+      openPlayer("trailer");
     }
   };
 
@@ -395,7 +404,12 @@ const Filmes = () => {
             setPauseFocus("continue");
           } else if (e.key === "Escape" || e.key === "Backspace") {
             e.preventDefault();
-            closePlayer();
+            // Se for trailer, fecha direto. Se for filme, mostra menu de pausa já ativado
+            if (playerMode === "trailer") {
+              closePlayer();
+            } else {
+              closePlayer();
+            }
           }
         }
       } else {
@@ -658,7 +672,7 @@ const Filmes = () => {
                     ⟵ Voltar
                   </button>
                   <button
-                    onClick={openPlayer}
+                    onClick={() => openPlayer()}
                     className={`flex-[0_0_200px] text-center bg-white/[0.08] rounded-[14px] text-white px-[26px] py-[14px] text-xl cursor-pointer transition-all
                                ${overlayFocus === "watch" ? "border-[6px] border-[#6F61EF]" : "border-[6px] border-transparent"}`}
                   >
@@ -715,27 +729,36 @@ const Filmes = () => {
           {playerActive && (
             <div className="fixed inset-0 bg-black/[0.96] flex items-center justify-center z-[150]">
               <div className="relative w-screen h-screen bg-black overflow-hidden">
-                <video
-                  ref={videoRef}
-                  className="w-full h-full object-contain bg-black"
-                  playsInline
-                  controls
-                  onError={(e) => {
-                    console.error("❌ Video error event:", e);
-                    const video = e.currentTarget as HTMLVideoElement;
-                    if (video.error) {
-                      console.error("❌ Video error code:", video.error.code);
-                      console.error("❌ Video error message:", video.error.message);
-                    }
-                  }}
-                  onLoadStart={() => console.log("📥 Vídeo começando a carregar...")}
-                  onCanPlay={() => console.log("✅ Vídeo pronto para reproduzir")}
-                  onPlaying={() => console.log("▶️ Vídeo reproduzindo")}
-                  onWaiting={() => console.log("⏳ Vídeo em buffer...")}
-                />
+                {playerMode === "movie" ? (
+                  <video
+                    ref={videoRef}
+                    className="w-full h-full object-contain bg-black"
+                    playsInline
+                    controls
+                    onError={(e) => {
+                      console.error("❌ Video error event:", e);
+                      const video = e.currentTarget as HTMLVideoElement;
+                      if (video.error) {
+                        console.error("❌ Video error code:", video.error.code);
+                        console.error("❌ Video error message:", video.error.message);
+                      }
+                    }}
+                    onLoadStart={() => console.log("📥 Vídeo começando a carregar...")}
+                    onCanPlay={() => console.log("✅ Vídeo pronto para reproduzir")}
+                    onPlaying={() => console.log("▶️ Vídeo reproduzindo")}
+                    onWaiting={() => console.log("⏳ Vídeo em buffer...")}
+                  />
+                ) : (
+                  <iframe
+                    src={trailerUrl}
+                    className="w-full h-full"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  />
+                )}
 
-                {/* Pause Menu */}
-                {pauseMenuVisible && (
+                {/* Pause Menu - só para filmes */}
+                {pauseMenuVisible && playerMode === "movie" && (
                   <div className="absolute inset-0 flex items-center justify-center bg-black/35 backdrop-blur-[2px]">
                     <div className="flex gap-6 p-6 bg-[rgba(30,30,40,0.75)] border-2 border-[rgba(111,97,239,0.7)] rounded-[18px] shadow-[0_0_25px_rgba(111,97,239,0.25)]">
                       <button
