@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 
 interface Movie {
   stream_id: number;
@@ -18,34 +18,35 @@ interface Category {
 const Filmes = () => {
   const navigate = useNavigate();
   const TMDB_KEY = "695e9abb631cdcd111ab8cb93c52a08f";
-  const PLACEHOLDER_ACTOR = "https://www.themoviedb.org/assets/2/v4/glyphicons/basic/glyphicons-basic-4-user-grey-d8fe957375e70239d6abdd549fd7568c89281b2179b5f4470e2e12895792dfa5.svg";
+  const PLACEHOLDER_ACTOR =
+    "https://www.themoviedb.org/assets/2/v4/glyphicons/basic/glyphicons-basic-4-user-grey-d8fe957375e70239d6abdd549fd7568c89281b2179b5f4470e2e12895792dfa5.svg";
 
-  const user_info = JSON.parse(localStorage.getItem('user_info') || '{}');
-  const server_info = JSON.parse(localStorage.getItem('server_info') || '{}');
-  const username = user_info.username || '';
-  const password = user_info.password || '';
-  const baseURL = `${server_info.server_protocol || 'http'}://${server_info.url || 'qetu.cc'}:${server_info.port || '8880'}`;
+  const user_info = JSON.parse(localStorage.getItem("user_info") || "{}");
+  const server_info = JSON.parse(localStorage.getItem("server_info") || "{}");
+  const username = user_info.username || "";
+  const password = user_info.password || "";
+  const baseURL = `${server_info.server_protocol || "http"}://${server_info.url || "qetu.cc"}:${server_info.port || "8880"}`;
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [movies, setMovies] = useState<Movie[]>([]);
   const [filteredMovies, setFilteredMovies] = useState<Movie[]>([]);
   const [currentCategory, setCurrentCategory] = useState<Category | null>(null);
-  const [focusSection, setFocusSection] = useState<'search' | 'categories' | 'movies'>('categories');
+  const [focusSection, setFocusSection] = useState<"search" | "categories" | "movies">("categories");
   const [focusIndex, setFocusIndex] = useState(0);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
   const [typingMode, setTypingMode] = useState(false);
 
   // Overlay states
   const [overlayActive, setOverlayActive] = useState(false);
   const [movieBasic, setMovieBasic] = useState<any>(null);
   const [movieInfo, setMovieInfo] = useState<any>(null);
-  const [overlayFocus, setOverlayFocus] = useState<'back' | 'watch' | 'fav'>('back');
+  const [overlayFocus, setOverlayFocus] = useState<"back" | "watch" | "fav">("back");
   const [cast, setCast] = useState<any[]>([]);
 
   // Player states
   const [playerActive, setPlayerActive] = useState(false);
   const [pauseMenuVisible, setPauseMenuVisible] = useState(false);
-  const [pauseFocus, setPauseFocus] = useState<'continue' | 'close'>('continue');
+  const [pauseFocus, setPauseFocus] = useState<"continue" | "close">("continue");
   const [isFav, setIsFav] = useState<boolean>(false);
   const [hlsReady, setHlsReady] = useState(false);
 
@@ -56,8 +57,8 @@ const Filmes = () => {
   const movieRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   useEffect(() => {
-    let cats = JSON.parse(localStorage.getItem('vod_categories') || '[]');
-    let movs = JSON.parse(localStorage.getItem('vod_streams') || '[]');
+    let cats = JSON.parse(localStorage.getItem("vod_categories") || "[]");
+    let movs = JSON.parse(localStorage.getItem("vod_streams") || "[]");
 
     if (cats.length > 0 && !cats.find((c: Category) => c.category_name === "Todos os Filmes")) {
       cats.unshift({ category_id: "all", category_name: "Todos os Filmes" });
@@ -72,50 +73,50 @@ const Filmes = () => {
     setMovies(movs);
 
     if (cats.length > 0 && movs.length > 0) {
-      const favIds = JSON.parse(localStorage.getItem('fav_movies') || '[]');
+      const favIds = JSON.parse(localStorage.getItem("fav_movies") || "[]");
       const hasFavs = movs.some((m: Movie) => favIds.includes(m.stream_id));
-      let startIndex = hasFavs ? 1 : (cats.length > 2 ? 2 : 0);
-      
+      let startIndex = hasFavs ? 1 : cats.length > 2 ? 2 : 0;
+
       const cat = cats[startIndex];
       setCurrentCategory(cat);
-      
-      const favIdsFilter = JSON.parse(localStorage.getItem('fav_movies') || '[]');
+
+      const favIdsFilter = JSON.parse(localStorage.getItem("fav_movies") || "[]");
       let filtered: Movie[];
-      if (cat.category_id === 'favorites') {
-        filtered = movs.filter(m => favIdsFilter.includes(m.stream_id));
-      } else if (cat.category_id && cat.category_id !== 'all') {
-        filtered = movs.filter(m => m.category_id === cat.category_id);
+      if (cat.category_id === "favorites") {
+        filtered = movs.filter((m) => favIdsFilter.includes(m.stream_id));
+      } else if (cat.category_id && cat.category_id !== "all") {
+        filtered = movs.filter((m) => m.category_id === cat.category_id);
       } else {
         filtered = movs;
       }
-      
+
       setFilteredMovies(filtered);
-      setFocusSection('categories');
+      setFocusSection("categories");
       setFocusIndex(startIndex);
     }
   }, []);
 
   const formatRating = (value: any) => {
     const num = parseFloat(value);
-    return isNaN(num) ? 'N/A' : num.toFixed(1);
+    return isNaN(num) ? "N/A" : num.toFixed(1);
   };
 
   const normalizeText = (text: string): string => {
     return text
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
       .toLowerCase()
       .trim();
   };
 
   const loadMovies = (categoryId: string, movieList: Movie[]) => {
-    const favIds = JSON.parse(localStorage.getItem('fav_movies') || '[]');
-    
+    const favIds = JSON.parse(localStorage.getItem("fav_movies") || "[]");
+
     let filtered: Movie[];
-    if (categoryId === 'favorites') {
-      filtered = movieList.filter(m => favIds.includes(m.stream_id));
-    } else if (categoryId && categoryId !== 'all') {
-      filtered = movieList.filter(m => m.category_id === categoryId);
+    if (categoryId === "favorites") {
+      filtered = movieList.filter((m) => favIds.includes(m.stream_id));
+    } else if (categoryId && categoryId !== "all") {
+      filtered = movieList.filter((m) => m.category_id === categoryId);
     } else {
       filtered = movieList;
     }
@@ -127,17 +128,15 @@ const Filmes = () => {
     const cat = categories[index];
     setCurrentCategory(cat);
     loadMovies(cat.category_id, movies);
-    setFocusSection('movies');
+    setFocusSection("movies");
     setFocusIndex(0);
   };
 
   const applySearch = () => {
     const normalizedTerm = normalizeText(searchTerm);
-    const filtered = movies.filter(m => 
-      normalizeText(m.name || '').includes(normalizedTerm)
-    );
+    const filtered = movies.filter((m) => normalizeText(m.name || "").includes(normalizedTerm));
     setFilteredMovies(filtered);
-    setFocusSection('movies');
+    setFocusSection("movies");
     setFocusIndex(0);
   };
 
@@ -151,18 +150,18 @@ const Filmes = () => {
 
   useEffect(() => {
     if (overlayActive || playerActive) return;
-    
-    if (focusSection === 'categories' && categoryRefs.current[focusIndex]) {
+
+    if (focusSection === "categories" && categoryRefs.current[focusIndex]) {
       categoryRefs.current[focusIndex]?.scrollIntoView({
-        behavior: 'smooth',
-        block: 'center',
-        inline: 'nearest'
+        behavior: "smooth",
+        block: "center",
+        inline: "nearest",
       });
-    } else if (focusSection === 'movies' && movieRefs.current[focusIndex]) {
+    } else if (focusSection === "movies" && movieRefs.current[focusIndex]) {
       movieRefs.current[focusIndex]?.scrollIntoView({
-        behavior: 'smooth',
-        block: 'center',
-        inline: 'nearest'
+        behavior: "smooth",
+        block: "center",
+        inline: "nearest",
       });
     }
   }, [focusIndex, focusSection, overlayActive, playerActive]);
@@ -170,9 +169,9 @@ const Filmes = () => {
   const openMoviePopup = async (movie: Movie) => {
     setMovieBasic(movie);
     setOverlayActive(true);
-    setOverlayFocus('back');
-    
-    const favs = JSON.parse(localStorage.getItem('fav_movies') || '[]');
+    setOverlayFocus("back");
+
+    const favs = JSON.parse(localStorage.getItem("fav_movies") || "[]");
     setIsFav(favs.includes(movie.stream_id));
 
     try {
@@ -186,7 +185,7 @@ const Filmes = () => {
         await loadCast(tmdbId);
       }
     } catch (err) {
-      console.error('Erro ao carregar info do filme:', err);
+      console.error("Erro ao carregar info do filme:", err);
     }
   };
 
@@ -199,7 +198,7 @@ const Filmes = () => {
         setCast(data.cast.slice(0, 10));
       }
     } catch (e) {
-      console.error('Erro ao carregar elenco:', e);
+      console.error("Erro ao carregar elenco:", e);
     }
   };
 
@@ -207,12 +206,15 @@ const Filmes = () => {
     if (playerActive) closePlayer();
     setOverlayActive(false);
     setCast([]);
-    setFocusSection('movies');
+    setFocusSection("movies");
   };
 
   const getVodUrl = () => {
     const streamId = movieBasic?.stream_id || movieInfo?.movie_data?.stream_id;
-    let ext = (movieInfo?.info?.container_extension || movieInfo?.movie_data?.container_extension || 'mp4').replace('.', '');
+    let ext = (movieInfo?.info?.container_extension || movieInfo?.movie_data?.container_extension || "mp4").replace(
+      ".",
+      "",
+    );
     return `${baseURL}/movie/${encodeURIComponent(username)}/${encodeURIComponent(password)}/${streamId}.${ext}`;
   };
 
@@ -221,7 +223,9 @@ const Filmes = () => {
     setPauseMenuVisible(false);
 
     if (hlsRef.current) {
-      try { hlsRef.current.destroy(); } catch {}
+      try {
+        hlsRef.current.destroy();
+      } catch {}
       hlsRef.current = null;
     }
   };
@@ -229,20 +233,22 @@ const Filmes = () => {
   const closePlayer = () => {
     if (videoRef.current) {
       videoRef.current.pause();
-      videoRef.current.removeAttribute('src');
+      videoRef.current.removeAttribute("src");
       videoRef.current.load();
     }
     if (hlsRef.current) {
-      try { hlsRef.current.destroy(); } catch {}
+      try {
+        hlsRef.current.destroy();
+      } catch {}
       hlsRef.current = null;
     }
     setPauseMenuVisible(false);
     setPlayerActive(false);
-    setOverlayFocus('back');
+    setOverlayFocus("back");
   };
 
   const toggleFavorite = () => {
-    let favs = JSON.parse(localStorage.getItem('fav_movies') || '[]');
+    let favs = JSON.parse(localStorage.getItem("fav_movies") || "[]");
     const idx = favs.indexOf(movieBasic.stream_id);
     if (idx >= 0) {
       favs.splice(idx, 1);
@@ -251,10 +257,10 @@ const Filmes = () => {
       favs.push(movieBasic.stream_id);
       setIsFav(true);
     }
-    localStorage.setItem('fav_movies', JSON.stringify(favs));
+    localStorage.setItem("fav_movies", JSON.stringify(favs));
 
-    if (currentCategory?.category_id === 'favorites') {
-      loadMovies('favorites', movies);
+    if (currentCategory?.category_id === "favorites") {
+      loadMovies("favorites", movies);
     }
   };
 
@@ -262,78 +268,78 @@ const Filmes = () => {
     if (overlayActive || playerActive) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (focusSection === 'search') {
-        if (e.key === 'ArrowDown') {
-          setFocusSection('categories');
+      if (focusSection === "search") {
+        if (e.key === "ArrowDown") {
+          setFocusSection("categories");
           setFocusIndex(0);
           setTypingMode(false);
           searchBoxRef.current?.blur();
-        } else if (e.key === 'Enter' || e.key === 'OK') {
+        } else if (e.key === "Enter" || e.key === "OK") {
           if (!typingMode) {
             setTypingMode(true);
             searchBoxRef.current?.focus();
           } else {
             setTypingMode(false);
             searchBoxRef.current?.blur();
-            setFocusSection('movies');
+            setFocusSection("movies");
             setFocusIndex(0);
           }
-        } else if (e.key === 'ArrowRight') {
-          setFocusSection('movies');
+        } else if (e.key === "ArrowRight") {
+          setFocusSection("movies");
           setFocusIndex(0);
           setTypingMode(false);
           searchBoxRef.current?.blur();
-        } else if (e.key === 'Escape' || e.key === 'Backspace') {
+        } else if (e.key === "Escape" || e.key === "Backspace") {
           setTypingMode(false);
           searchBoxRef.current?.blur();
-          setSearchTerm('');
-          setFocusSection('categories');
-          const idx = categories.findIndex(c => c === currentCategory);
+          setSearchTerm("");
+          setFocusSection("categories");
+          const idx = categories.findIndex((c) => c === currentCategory);
           setFocusIndex(idx >= 0 ? idx : 0);
         }
-      } else if (focusSection === 'categories') {
-        if (e.key === 'ArrowDown') {
+      } else if (focusSection === "categories") {
+        if (e.key === "ArrowDown") {
           setFocusIndex((focusIndex + 1) % categories.length);
-        } else if (e.key === 'ArrowUp' && focusIndex === 0) {
-          setFocusSection('search');
+        } else if (e.key === "ArrowUp" && focusIndex === 0) {
+          setFocusSection("search");
           setFocusIndex(0);
-        } else if (e.key === 'ArrowUp') {
+        } else if (e.key === "ArrowUp") {
           setFocusIndex(Math.max(0, focusIndex - 1));
-        } else if (e.key === 'Enter' || e.key === 'OK') {
+        } else if (e.key === "Enter" || e.key === "OK") {
           selectCategory(focusIndex);
-        } else if (e.key === 'ArrowRight' && currentCategory) {
-          setFocusSection('movies');
+        } else if (e.key === "ArrowRight" && currentCategory) {
+          setFocusSection("movies");
           setFocusIndex(0);
         }
-      } else if (focusSection === 'movies') {
+      } else if (focusSection === "movies") {
         const totalCols = 4;
-        if (e.key === 'ArrowRight') {
+        if (e.key === "ArrowRight") {
           setFocusIndex(Math.min(focusIndex + 1, filteredMovies.length - 1));
-        } else if (e.key === 'ArrowLeft' && focusIndex % totalCols === 0) {
-          setFocusSection('categories');
-          const idx = categories.findIndex(c => c === currentCategory);
+        } else if (e.key === "ArrowLeft" && focusIndex % totalCols === 0) {
+          setFocusSection("categories");
+          const idx = categories.findIndex((c) => c === currentCategory);
           setFocusIndex(idx >= 0 ? idx : 0);
-        } else if (e.key === 'ArrowLeft') {
+        } else if (e.key === "ArrowLeft") {
           setFocusIndex(Math.max(0, focusIndex - 1));
-        } else if (e.key === 'ArrowDown') {
+        } else if (e.key === "ArrowDown") {
           setFocusIndex(Math.min(focusIndex + totalCols, filteredMovies.length - 1));
-        } else if (e.key === 'ArrowUp') {
+        } else if (e.key === "ArrowUp") {
           if (focusIndex < totalCols) {
-            setFocusSection('categories');
-            const idx = categories.findIndex(c => c === currentCategory);
+            setFocusSection("categories");
+            const idx = categories.findIndex((c) => c === currentCategory);
             setFocusIndex(idx >= 0 ? idx : 0);
           } else {
             setFocusIndex(Math.max(0, focusIndex - totalCols));
           }
-        } else if (e.key === 'Enter' || e.key === 'OK') {
+        } else if (e.key === "Enter" || e.key === "OK") {
           const movie = filteredMovies[focusIndex];
           if (movie) openMoviePopup(movie);
         }
       }
     };
 
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
   }, [focusSection, focusIndex, categories, filteredMovies, currentCategory, typingMode, overlayActive, playerActive]);
 
   useEffect(() => {
@@ -342,63 +348,63 @@ const Filmes = () => {
     const handleOverlayKeys = (e: KeyboardEvent) => {
       if (playerActive) {
         if (pauseMenuVisible) {
-          if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
-            setPauseFocus(pauseFocus === 'continue' ? 'close' : 'continue');
-          } else if (e.key === 'Enter' || e.key === 'OK') {
-            if (pauseFocus === 'continue') {
+          if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
+            setPauseFocus(pauseFocus === "continue" ? "close" : "continue");
+          } else if (e.key === "Enter" || e.key === "OK") {
+            if (pauseFocus === "continue") {
               setPauseMenuVisible(false);
               videoRef.current?.play().catch(() => {});
             } else {
               closePlayer();
             }
-          } else if (e.key === 'Escape' || e.key === 'Backspace') {
+          } else if (e.key === "Escape" || e.key === "Backspace") {
             closePlayer();
           }
         } else {
-          if (e.key === 'Enter' || e.key === 'OK') {
+          if (e.key === "Enter" || e.key === "OK") {
             e.preventDefault();
             videoRef.current?.pause();
             setPauseMenuVisible(true);
-            setPauseFocus('continue');
-          } else if (e.key === 'Escape' || e.key === 'Backspace') {
+            setPauseFocus("continue");
+          } else if (e.key === "Escape" || e.key === "Backspace") {
             e.preventDefault();
             closePlayer();
           }
         }
       } else {
-        if (e.key === 'ArrowRight') {
-          if (overlayFocus === 'back') setOverlayFocus('watch');
-          else if (overlayFocus === 'watch') setOverlayFocus('fav');
-          else if (overlayFocus === 'fav') setOverlayFocus('back');
-        } else if (e.key === 'ArrowLeft') {
-          if (overlayFocus === 'fav') setOverlayFocus('watch');
-          else if (overlayFocus === 'watch') setOverlayFocus('back');
-          else if (overlayFocus === 'back') setOverlayFocus('fav');
-        } else if (e.key === 'Enter' || e.key === 'OK') {
-          if (overlayFocus === 'watch') openPlayer();
-          else if (overlayFocus === 'back') closeInfoOverlay();
-          else if (overlayFocus === 'fav') toggleFavorite();
-        } else if (e.key === 'Escape' || e.key === 'Backspace') {
+        if (e.key === "ArrowRight") {
+          if (overlayFocus === "back") setOverlayFocus("watch");
+          else if (overlayFocus === "watch") setOverlayFocus("fav");
+          else if (overlayFocus === "fav") setOverlayFocus("back");
+        } else if (e.key === "ArrowLeft") {
+          if (overlayFocus === "fav") setOverlayFocus("watch");
+          else if (overlayFocus === "watch") setOverlayFocus("back");
+          else if (overlayFocus === "back") setOverlayFocus("fav");
+        } else if (e.key === "Enter" || e.key === "OK") {
+          if (overlayFocus === "watch") openPlayer();
+          else if (overlayFocus === "back") closeInfoOverlay();
+          else if (overlayFocus === "fav") toggleFavorite();
+        } else if (e.key === "Escape" || e.key === "Backspace") {
           closeInfoOverlay();
         }
       }
     };
 
-    document.addEventListener('keydown', handleOverlayKeys);
-    return () => document.removeEventListener('keydown', handleOverlayKeys);
+    document.addEventListener("keydown", handleOverlayKeys);
+    return () => document.removeEventListener("keydown", handleOverlayKeys);
   }, [overlayActive, playerActive, pauseMenuVisible, overlayFocus, pauseFocus]);
 
   // Load HLS.js
   useEffect(() => {
-    const script = document.createElement('script');
-    script.src = 'https://cdn.jsdelivr.net/npm/hls.js@latest';
+    const script = document.createElement("script");
+    script.src = "https://cdn.jsdelivr.net/npm/hls.js@latest";
     script.async = true;
     script.onload = () => {
-      console.log('✅ HLS.js carregado com sucesso');
+      console.log("✅ HLS.js carregado com sucesso");
       setHlsReady(true);
     };
     script.onerror = () => {
-      console.error('❌ Erro ao carregar HLS.js');
+      console.error("❌ Erro ao carregar HLS.js");
     };
     document.body.appendChild(script);
     return () => {
@@ -413,67 +419,75 @@ const Filmes = () => {
     if (!playerActive || !videoRef.current) return;
 
     const src = getVodUrl();
-    console.log('=== 🎬 PLAYER DEBUG ===');
-    console.log('URL:', src);
-    console.log('HLS Ready:', hlsReady);
-    console.log('HLS Available:', !!(window as any).Hls);
-    console.log('Extension:', movieInfo?.info?.container_extension || movieInfo?.movie_data?.container_extension || 'mp4');
-    console.log('videoRef disponível:', !!videoRef.current);
+    console.log("=== 🎬 PLAYER DEBUG ===");
+    console.log("URL:", src);
+    console.log("HLS Ready:", hlsReady);
+    console.log("HLS Available:", !!(window as any).Hls);
+    console.log(
+      "Extension:",
+      movieInfo?.info?.container_extension || movieInfo?.movie_data?.container_extension || "mp4",
+    );
+    console.log("videoRef disponível:", !!videoRef.current);
 
-    const isHLS = src.endsWith('.m3u8');
-    console.log('É HLS?', isHLS);
-    
+    const isHLS = src.endsWith(".m3u8");
+    console.log("É HLS?", isHLS);
+
     if (isHLS && hlsReady && (window as any).Hls && (window as any).Hls.isSupported()) {
-      console.log('🎥 Usando HLS.js');
-      const hls = new (window as any).Hls({ 
-        lowLatencyMode: true, 
+      console.log("🎥 Usando HLS.js");
+      const hls = new (window as any).Hls({
+        lowLatencyMode: true,
         enableWorker: true,
-        debug: false
+        debug: false,
       });
-      
+
       hls.on((window as any).Hls.Events.ERROR, (event: any, data: any) => {
-        console.error('❌ HLS Error:', data);
+        console.error("❌ HLS Error:", data);
         if (data.fatal) {
-          console.error('💥 Fatal error, tipo:', data.type);
+          console.error("💥 Fatal error, tipo:", data.type);
         }
       });
-      
+
       hls.loadSource(src);
       hls.attachMedia(videoRef.current);
       hls.on((window as any).Hls.Events.MANIFEST_PARSED, () => {
-        console.log('✅ Manifest parseado, iniciando reprodução...');
-        videoRef.current?.play()
-          .then(() => console.log('▶️ Reprodução iniciada com sucesso!'))
-          .catch((err) => console.error('❌ Erro ao reproduzir:', err));
+        console.log("✅ Manifest parseado, iniciando reprodução...");
+        videoRef.current
+          ?.play()
+          .then(() => console.log("▶️ Reprodução iniciada com sucesso!"))
+          .catch((err) => console.error("❌ Erro ao reproduzir:", err));
       });
       hlsRef.current = hls;
     } else {
-      console.log('🎥 Usando player nativo (fallback)');
+      console.log("🎥 Usando player nativo (fallback)");
       videoRef.current.src = src;
-      videoRef.current.play()
-        .then(() => console.log('▶️ Reprodução nativa iniciada!'))
+      videoRef.current
+        .play()
+        .then(() => console.log("▶️ Reprodução nativa iniciada!"))
         .catch((err) => {
-          console.error('❌ Erro ao reproduzir nativo:', err);
-          alert('Erro ao reproduzir vídeo. Verifique o console para detalhes.');
+          console.error("❌ Erro ao reproduzir nativo:", err);
+          alert("Erro ao reproduzir vídeo. Verifique o console para detalhes.");
         });
     }
   }, [playerActive]);
 
   const info = movieInfo?.info || {};
-  const name = info.name || movieBasic?.name || 'Filme';
+  const name = info.name || movieBasic?.name || "Filme";
   const poster = info.cover_big || info.movie_image || movieBasic?.stream_icon;
   const bg = (info.backdrop_path && info.backdrop_path[0]) || poster;
-  const year = info.releasedate?.slice(0, 4) || '';
-  const genre = info.genre || '';
-  const duration = info.duration || '';
-  const rating = info.rating || movieBasic?.rating || '';
-  const director = info.director || '';
-  const desc = info.description || info.plot || '—';
+  const year = info.releasedate?.slice(0, 4) || "";
+  const genre = info.genre || "";
+  const duration = info.duration || "";
+  const rating = info.rating || movieBasic?.rating || "";
+  const director = info.director || "";
+  const desc = info.description || info.plot || "—";
 
   return (
     <div className="flex h-screen bg-black text-white overflow-hidden">
       {/* Sidebar */}
-      <div className="w-[460px] bg-black/75 border-r-2 border-white/10 p-5 overflow-y-auto scrollbar-none flex flex-col scroll-smooth" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+      <div
+        className="w-[460px] bg-black/75 border-r-2 border-white/10 p-5 overflow-y-auto scrollbar-none flex flex-col scroll-smooth"
+        style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+      >
         <input
           ref={searchBoxRef}
           type="text"
@@ -481,29 +495,37 @@ const Filmes = () => {
           onChange={(e) => setSearchTerm(e.target.value)}
           placeholder="🔍 Buscar filmes..."
           className={`w-full p-4 mb-[18px] text-[22px] rounded-lg bg-white/10 text-white transition-all
-                     ${focusSection === 'search' ? 'border-[6px] border-[#6F61EF]' : 'border-[6px] border-transparent'}`}
+                     ${focusSection === "search" ? "border-[6px] border-[#6F61EF]" : "border-[6px] border-transparent"}`}
         />
-        
+
         <div>
           {categories.map((cat, index) => {
-            const favIds = JSON.parse(localStorage.getItem('fav_movies') || '[]');
-            const count = cat.category_id === 'all' ? movies.length :
-                         cat.category_id === 'favorites' ? movies.filter(m => favIds.includes(m.stream_id)).length :
-                         movies.filter(m => m.category_id === cat.category_id).length;
+            const favIds = JSON.parse(localStorage.getItem("fav_movies") || "[]");
+            const count =
+              cat.category_id === "all"
+                ? movies.length
+                : cat.category_id === "favorites"
+                  ? movies.filter((m) => favIds.includes(m.stream_id)).length
+                  : movies.filter((m) => m.category_id === cat.category_id).length;
 
             const isActive = cat === currentCategory;
-            const isFocused = focusSection === 'categories' && focusIndex === index;
+            const isFocused = focusSection === "categories" && focusIndex === index;
 
             return (
               <div
                 key={cat.category_id}
-                ref={(el) => categoryRefs.current[index] = el}
+                ref={(el) => (categoryRefs.current[index] = el)}
                 onClick={() => selectCategory(index)}
                 className={`p-4 px-5 rounded-lg mb-3 cursor-pointer text-2xl flex justify-between items-center transition-all
-                           ${isActive && isFocused ? 'border-[6px] border-[#6F61EF] bg-[rgba(112,99,235,0.35)] text-white font-bold' :
-                             isActive ? 'border-[6px] border-transparent bg-[rgba(112,99,235,0.15)] text-white font-bold' :
-                             isFocused ? 'border-[6px] border-[#6F61EF] bg-white/5 text-white font-bold' :
-                             'border-[6px] border-transparent bg-white/5 text-[#ccc]'}`}
+                           ${
+                             isActive && isFocused
+                               ? "border-[6px] border-[#6F61EF] bg-[rgba(112,99,235,0.35)] text-white font-bold"
+                               : isActive
+                                 ? "border-[6px] border-transparent bg-[rgba(112,99,235,0.15)] text-white font-bold"
+                                 : isFocused
+                                   ? "border-[6px] border-[#6F61EF] bg-white/5 text-white"
+                                   : "border-[6px] border-transparent bg-white/5 text-[#ccc]"
+                           }`}
               >
                 <span>{cat.category_name}</span>
                 <span>{count}</span>
@@ -514,25 +536,28 @@ const Filmes = () => {
       </div>
 
       {/* Content Grid */}
-      <div className="flex-1 p-4 overflow-y-auto scrollbar-none grid grid-cols-4 gap-[10px] content-start justify-items-center" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+      <div
+        className="flex-1 p-4 overflow-y-auto scrollbar-none grid grid-cols-4 gap-[10px] content-start justify-items-center"
+        style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+      >
         {filteredMovies.length === 0 ? (
           <p className="col-span-4 text-center text-[22px] text-white/70">Nenhum filme encontrado.</p>
         ) : (
           filteredMovies.map((movie, i) => {
-            const isFocused = focusSection === 'movies' && focusIndex === i;
+            const isFocused = focusSection === "movies" && focusIndex === i;
             return (
               <div
                 key={movie.stream_id}
-                ref={(el) => movieRefs.current[i] = el}
+                ref={(el) => (movieRefs.current[i] = el)}
                 onClick={() => openMoviePopup(movie)}
                 className={`relative bg-black/65 rounded-[10px] overflow-hidden cursor-pointer w-[350px] h-[485px] transition-all
-                           ${isFocused ? 'border-[6px] border-[#6F61EF]' : 'border-[6px] border-transparent'}`}
+                           ${isFocused ? "border-[6px] border-[#6F61EF]" : "border-[6px] border-transparent"}`}
               >
                 <div className="absolute top-2 right-2 bg-black/70 text-[#FFD700] font-bold text-xl px-3 py-[6px] rounded-lg z-[2] pointer-events-none">
                   ⭐ {formatRating(movie.rating || movie.vote_average)}
                 </div>
                 <img
-                  src={movie.stream_icon || 'https://via.placeholder.com/350x485?text=Filme'}
+                  src={movie.stream_icon || "https://via.placeholder.com/350x485?text=Filme"}
                   alt={movie.name}
                   className="w-full h-full object-cover rounded-[6px] bg-[#222]"
                 />
@@ -547,51 +572,74 @@ const Filmes = () => {
         <div className="fixed inset-0 bg-black z-[100] overflow-hidden">
           <div className="relative w-full min-h-screen flex flex-col items-start justify-start overflow-hidden">
             {/* Hero Background */}
-            <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url('${bg || poster || ''}')` }} />
+            <div
+              className="absolute inset-0 bg-cover bg-center"
+              style={{ backgroundImage: `url('${bg || poster || ""}')` }}
+            />
             <div className="absolute inset-0 bg-black/65" />
 
             {/* Hero Content */}
             <div className="relative z-[2] flex gap-10 items-start justify-start w-full p-10 pt-10">
               <img
-                src={poster || 'https://via.placeholder.com/600x900?text=Poster'}
+                src={poster || "https://via.placeholder.com/600x900?text=Poster"}
                 alt="Poster do filme"
                 className="w-[380px] h-auto rounded-[14px] border-4 border-white/[0.08] shadow-[0_10px_40px_rgba(0,0,0,0.7)]"
               />
               <div className="max-w-[800px] flex flex-col gap-[14px]">
                 <h1 className="text-[40px] leading-[1.15] m-0">{name}</h1>
-                
+
                 <div className="flex flex-wrap gap-[10px]">
-                  {year && <div className="text-base px-3 py-2 rounded-full border border-white/[0.18] bg-white/[0.06] text-white">{year}</div>}
-                  {duration && <div className="text-base px-3 py-2 rounded-full border border-white/[0.18] bg-white/[0.06] text-white">{duration}</div>}
-                  {genre && <div className="text-base px-3 py-2 rounded-full border border-white/[0.18] bg-white/[0.06] text-white">{genre}</div>}
-                  {rating && <div className="text-base px-3 py-2 rounded-full border border-[rgba(255,215,0,0.45)] bg-[rgba(255,215,0,0.1)] text-[#FFD700]">⭐ {formatRating(rating)}</div>}
+                  {year && (
+                    <div className="text-base px-3 py-2 rounded-full border border-white/[0.18] bg-white/[0.06] text-white">
+                      {year}
+                    </div>
+                  )}
+                  {duration && (
+                    <div className="text-base px-3 py-2 rounded-full border border-white/[0.18] bg-white/[0.06] text-white">
+                      {duration}
+                    </div>
+                  )}
+                  {genre && (
+                    <div className="text-base px-3 py-2 rounded-full border border-white/[0.18] bg-white/[0.06] text-white">
+                      {genre}
+                    </div>
+                  )}
+                  {rating && (
+                    <div className="text-base px-3 py-2 rounded-full border border-[rgba(255,215,0,0.45)] bg-[rgba(255,215,0,0.1)] text-[#FFD700]">
+                      ⭐ {formatRating(rating)}
+                    </div>
+                  )}
                 </div>
 
-                {director && <div className="flex gap-[14px] flex-wrap text-[#bbb] text-base"><strong>Direção:</strong> {director}</div>}
-                
+                {director && (
+                  <div className="flex gap-[14px] flex-wrap text-[#bbb] text-base">
+                    <strong>Direção:</strong> {director}
+                  </div>
+                )}
+
                 <div className="text-lg leading-[1.6] text-[#ddd] whitespace-pre-wrap mt-2">{desc}</div>
 
                 <div className="flex gap-5 mt-5 justify-start">
                   <button
                     onClick={closeInfoOverlay}
                     className={`flex-[0_0_200px] text-center bg-white/[0.08] rounded-[14px] text-white px-[26px] py-[14px] text-xl cursor-pointer transition-all
-                               ${overlayFocus === 'back' ? 'border-[6px] border-[#6F61EF]' : 'border-[6px] border-transparent'}`}
+                               ${overlayFocus === "back" ? "border-[6px] border-[#6F61EF]" : "border-[6px] border-transparent"}`}
                   >
                     ⟵ Voltar
                   </button>
                   <button
                     onClick={openPlayer}
                     className={`flex-[0_0_200px] text-center bg-white/[0.08] rounded-[14px] text-white px-[26px] py-[14px] text-xl cursor-pointer transition-all
-                               ${overlayFocus === 'watch' ? 'border-[6px] border-[#6F61EF]' : 'border-[6px] border-transparent'}`}
+                               ${overlayFocus === "watch" ? "border-[6px] border-[#6F61EF]" : "border-[6px] border-transparent"}`}
                   >
                     ▶ Assistir
                   </button>
                   <button
                     onClick={toggleFavorite}
                     className={`flex-[0_0_200px] text-center bg-white/[0.08] rounded-[14px] text-white px-[26px] py-[14px] text-xl cursor-pointer transition-all
-                               ${overlayFocus === 'fav' ? 'border-[6px] border-[#6F61EF]' : 'border-[6px] border-transparent'}`}
+                               ${overlayFocus === "fav" ? "border-[6px] border-[#6F61EF]" : "border-[6px] border-transparent"}`}
                   >
-                    {isFav ? '💔 Remover' : '⭐ Favoritar'}
+                    {isFav ? "💔 Remover" : "⭐ Favoritar"}
                   </button>
                 </div>
               </div>
@@ -602,14 +650,21 @@ const Filmes = () => {
               <div className="relative z-[3] w-full p-[60px] pt-[100px]">
                 <div className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-[18px]">
                   {cast.map((actor: any) => (
-                    <div key={actor.id} className="text-center text-white text-sm bg-black/55 rounded-xl shadow-[0_0_10px_rgba(0,0,0,0.6)]">
+                    <div
+                      key={actor.id}
+                      className="text-center text-white text-sm bg-black/55 rounded-xl shadow-[0_0_10px_rgba(0,0,0,0.6)]"
+                    >
                       <img
-                        src={actor.profile_path ? `https://image.tmdb.org/t/p/w185${actor.profile_path}` : PLACEHOLDER_ACTOR}
+                        src={
+                          actor.profile_path
+                            ? `https://image.tmdb.org/t/p/w185${actor.profile_path}`
+                            : PLACEHOLDER_ACTOR
+                        }
                         alt={actor.name}
                         className="w-full rounded-lg object-cover h-[220px] bg-[#222]"
                       />
                       <div className="mt-[6px] font-bold text-[13px]">{actor.name}</div>
-                      <div className="text-[#ccc] text-xs">{actor.character || ''}</div>
+                      <div className="text-[#ccc] text-xs">{actor.character || ""}</div>
                     </div>
                   ))}
                 </div>
@@ -621,25 +676,25 @@ const Filmes = () => {
           {playerActive && (
             <div className="fixed inset-0 bg-black/[0.96] flex items-center justify-center z-[150]">
               <div className="relative w-screen h-screen bg-black overflow-hidden">
-                <video 
-                  ref={videoRef} 
-                  className="w-full h-full object-contain bg-black" 
+                <video
+                  ref={videoRef}
+                  className="w-full h-full object-contain bg-black"
                   playsInline
                   controls
                   onError={(e) => {
-                    console.error('❌ Video error event:', e);
+                    console.error("❌ Video error event:", e);
                     const video = e.currentTarget as HTMLVideoElement;
                     if (video.error) {
-                      console.error('❌ Video error code:', video.error.code);
-                      console.error('❌ Video error message:', video.error.message);
+                      console.error("❌ Video error code:", video.error.code);
+                      console.error("❌ Video error message:", video.error.message);
                     }
                   }}
-                  onLoadStart={() => console.log('📥 Vídeo começando a carregar...')}
-                  onCanPlay={() => console.log('✅ Vídeo pronto para reproduzir')}
-                  onPlaying={() => console.log('▶️ Vídeo reproduzindo')}
-                  onWaiting={() => console.log('⏳ Vídeo em buffer...')}
+                  onLoadStart={() => console.log("📥 Vídeo começando a carregar...")}
+                  onCanPlay={() => console.log("✅ Vídeo pronto para reproduzir")}
+                  onPlaying={() => console.log("▶️ Vídeo reproduzindo")}
+                  onWaiting={() => console.log("⏳ Vídeo em buffer...")}
                 />
-                
+
                 {/* Pause Menu */}
                 {pauseMenuVisible && (
                   <div className="absolute inset-0 flex items-center justify-center bg-black/35 backdrop-blur-[2px]">
@@ -650,14 +705,14 @@ const Filmes = () => {
                           videoRef.current?.play().catch(() => {});
                         }}
                         className={`min-w-[260px] text-center bg-white/[0.08] rounded-[14px] text-white px-[26px] py-4 text-[26px] cursor-pointer transition-all
-                                   ${pauseFocus === 'continue' ? 'border-[6px] border-[#6F61EF] scale-[1.02]' : 'border-[6px] border-transparent'}`}
+                                   ${pauseFocus === "continue" ? "border-[6px] border-[#6F61EF] scale-[1.02]" : "border-[6px] border-transparent"}`}
                       >
                         ▶ Continuar
                       </button>
                       <button
                         onClick={closePlayer}
                         className={`min-w-[260px] text-center bg-white/[0.08] rounded-[14px] text-white px-[26px] py-4 text-[26px] cursor-pointer transition-all
-                                   ${pauseFocus === 'close' ? 'border-[6px] border-[#6F61EF] scale-[1.02]' : 'border-[6px] border-transparent'}`}
+                                   ${pauseFocus === "close" ? "border-[6px] border-[#6F61EF] scale-[1.02]" : "border-[6px] border-transparent"}`}
                       >
                         ✕ Fechar
                       </button>
