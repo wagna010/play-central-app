@@ -369,6 +369,8 @@ const Filmes = () => {
             setFocusIndex(Math.max(0, focusIndex - totalCols));
           }
         } else if (e.key === "Enter" || e.key === "OK") {
+          e.preventDefault();
+          e.stopPropagation();
           const movie = filteredMovies[focusIndex];
           if (movie) openMoviePopup(movie);
         }
