@@ -404,9 +404,12 @@ const Filmes = () => {
             setPauseFocus("continue");
           } else if (e.key === "Escape" || e.key === "Backspace") {
             e.preventDefault();
-            // Se for trailer, fecha direto. Se for filme, mostra menu de pausa já ativado
-            if (playerMode === "trailer") {
-              closePlayer();
+            if (!pauseMenuVisible) {
+              // Pausa vídeo apenas se for filme
+              if (playerMode === "movie") {
+                videoRef.current?.pause();
+              }
+              setPauseMenuVisible(true);
             } else {
               closePlayer();
             }
@@ -415,11 +418,11 @@ const Filmes = () => {
       } else {
         if (e.key === "ArrowRight") {
           if (overlayFocus === "back") setOverlayFocus("watch");
-          else if (overlayFocus === "watch") setOverlayFocus("trailer");
+          else if (overlayFocus === "watch") setOverlayFocus(trailers.length > 0 ? "trailer" : "fav");
           else if (overlayFocus === "trailer") setOverlayFocus("fav");
           else if (overlayFocus === "fav") setOverlayFocus("back");
         } else if (e.key === "ArrowLeft") {
-          if (overlayFocus === "fav") setOverlayFocus("trailer");
+          if (overlayFocus === "fav") setOverlayFocus(trailers.length > 0 ? "trailer" : "watch");
           else if (overlayFocus === "trailer") setOverlayFocus("watch");
           else if (overlayFocus === "watch") setOverlayFocus("back");
           else if (overlayFocus === "back") setOverlayFocus("fav");
@@ -678,15 +681,15 @@ const Filmes = () => {
                   >
                     ▶ Assistir
                   </button>
-                  <button
-                    onClick={openTrailer}
-                    disabled={trailers.length === 0}
-                    className={`flex-[0_0_200px] text-center bg-white/[0.08] rounded-[14px] text-white px-[26px] py-[14px] text-xl cursor-pointer transition-all
-                               ${overlayFocus === "trailer" ? "border-[6px] border-[#6F61EF]" : "border-[6px] border-transparent"}
-                               ${trailers.length === 0 ? "opacity-50 cursor-not-allowed" : ""}`}
-                  >
-                    🎬 Trailer
-                  </button>
+                  {trailers.length > 0 && (
+                    <button
+                      onClick={openTrailer}
+                      className={`flex-[0_0_200px] text-center bg-white/[0.08] rounded-[14px] text-white px-[26px] py-[14px] text-xl cursor-pointer transition-all
+                                 ${overlayFocus === "trailer" ? "border-[6px] border-[#6F61EF]" : "border-[6px] border-transparent"}`}
+                    >
+                      🎬 Trailer
+                    </button>
+                  )}
                   <button
                     onClick={toggleFavorite}
                     className={`flex-[0_0_200px] text-center bg-white/[0.08] rounded-[14px] text-white px-[26px] py-[14px] text-xl cursor-pointer transition-all
@@ -757,14 +760,16 @@ const Filmes = () => {
                   />
                 )}
 
-                {/* Pause Menu - só para filmes */}
-                {pauseMenuVisible && playerMode === "movie" && (
+                {/* Pause Menu */}
+                {pauseMenuVisible && (
                   <div className="absolute inset-0 flex items-center justify-center bg-black/35 backdrop-blur-[2px]">
                     <div className="flex gap-6 p-6 bg-[rgba(30,30,40,0.75)] border-2 border-[rgba(111,97,239,0.7)] rounded-[18px] shadow-[0_0_25px_rgba(111,97,239,0.25)]">
                       <button
                         onClick={() => {
                           setPauseMenuVisible(false);
-                          videoRef.current?.play().catch(() => {});
+                          if (playerMode === "movie") {
+                            videoRef.current?.play().catch(() => {});
+                          }
                         }}
                         className={`min-w-[260px] text-center bg-white/[0.08] rounded-[14px] text-white px-[26px] py-4 text-[26px] cursor-pointer transition-all
                                    ${pauseFocus === "continue" ? "border-[6px] border-[#6F61EF] scale-[1.02]" : "border-[6px] border-transparent"}`}
