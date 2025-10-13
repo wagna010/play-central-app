@@ -158,6 +158,12 @@ const Filmes = () => {
         block: 'center',
         inline: 'nearest'
       });
+    } else if (focusSection === 'movies' && movieRefs.current[focusIndex]) {
+      movieRefs.current[focusIndex]?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+        inline: 'nearest'
+      });
     }
   }, [focusIndex, focusSection, overlayActive, playerActive]);
 
@@ -467,7 +473,7 @@ const Filmes = () => {
   return (
     <div className="flex h-screen bg-black text-white overflow-hidden">
       {/* Sidebar */}
-      <div className="w-[460px] bg-black/75 border-r-2 border-white/10 p-5 overflow-y-auto scrollbar-none flex flex-col scroll-smooth">
+      <div className="w-[460px] bg-black/75 border-r-2 border-white/10 p-5 overflow-y-auto scrollbar-none flex flex-col scroll-smooth" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
         <input
           ref={searchBoxRef}
           type="text"
@@ -508,7 +514,7 @@ const Filmes = () => {
       </div>
 
       {/* Content Grid */}
-      <div className="flex-1 p-4 overflow-y-auto scrollbar-none grid grid-cols-4 gap-[10px] content-start justify-items-center">
+      <div className="flex-1 p-4 overflow-y-auto scrollbar-none grid grid-cols-4 gap-[10px] content-start justify-items-center" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
         {filteredMovies.length === 0 ? (
           <p className="col-span-4 text-center text-[22px] text-white/70">Nenhum filme encontrado.</p>
         ) : (
