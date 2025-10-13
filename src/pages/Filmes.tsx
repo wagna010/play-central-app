@@ -319,6 +319,7 @@ const Filmes = () => {
             searchBoxRef.current?.blur();
             setFocusSection("movies");
             setFocusIndex(0);
+            return;
           }
         } else if (e.key === "ArrowRight") {
           setFocusSection("movies");
