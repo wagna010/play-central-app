@@ -294,7 +294,7 @@ const Filmes = () => {
   const openTrailer = () => {
     if (trailers.length > 0) {
       const trailer = trailers[0];
-      const embedUrl = `https://www.youtube.com/embed/${trailer.key}?autoplay=1&rel=0&modestbranding=1`;
+      const embedUrl = `https://www.youtube.com/embed/${trailer.key}?autoplay=1&controls=0&showinfo=0&rel=0&modestbranding=1&fs=0&disablekb=1`;
       setTrailerUrl(embedUrl);
       openPlayer("trailer");
     }
