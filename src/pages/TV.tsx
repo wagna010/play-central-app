@@ -305,11 +305,13 @@ const TV = () => {
     };
 
     const handleKeyUp = (e: KeyboardEvent) => {
-      if ((e.key === 'Enter' || e.key === 'OK') && longPressTimer) {
-        clearTimeout(longPressTimer);
-        longPressTimer = null;
+      if (e.key === 'Enter' || e.key === 'OK') {
+        if (longPressTimer) {
+          clearTimeout(longPressTimer);
+          longPressTimer = null;
+        }
         
-        // Se não foi long press, executa ação normal
+        // Executa ação normal (funciona tanto para categorias quanto canais)
         if (focusPanel === 'channels') {
           const channel = filteredChannels[focusIndex];
           if (channel) selectChannel(channel);
@@ -431,24 +433,31 @@ const TV = () => {
           <div className="flex-1 overflow-y-auto pr-2 p-1 [&::-webkit-scrollbar]:w-[6px] [&::-webkit-scrollbar-thumb]:bg-white/15 [&::-webkit-scrollbar-thumb]:rounded-[3px]">
             <div
               onClick={() => selectCategory(null)}
-              className={`bg-white/5 mb-2 rounded-lg p-3 px-4 cursor-pointer transition-all
-                ${currentCategory === null ? 'bg-[rgba(111,97,239,0.4)] text-white border-l-4 border-l-[#6F61EF] scale-[1.02]' : 'text-white border-l-4 border-l-transparent'}
-                ${focusPanel === 'categories' && focusIndex === 0 ? 'border-4 border-[#6F61EF] m-1' : 'border-4 border-transparent m-1'}`}
+              className={`mb-2 rounded-lg p-3 px-4 cursor-pointer transition-all flex justify-between items-center
+                ${currentCategory === null ? 'bg-[rgba(111,97,239,0.4)] text-white border-l-4 border-l-[#6F61EF] scale-[1.02]' : 'bg-white/5 text-white border-l-4 border-l-transparent'}
+                ${focusPanel === 'categories' && focusIndex === 0 ? 'border-4 border-[#6F61EF] bg-[rgba(111,97,239,0.25)] m-1' : 'border-4 border-transparent m-1'}`}
             >
-              Todos os Canais
+              <span>Todos os Canais</span>
+              <span className="text-white/70">{channels.length}</span>
             </div>
             {categories.map((cat, index) => {
+              const count = cat.category_id === 'favorites'
+                ? favorites.length
+                : channels.filter(c => c.category_id === cat.category_id).length;
+              
               const isFocused = focusPanel === 'categories' && focusIndex === index + 1;
               const isActive = currentCategory?.category_id === cat.category_id;
+              
               return (
                 <div
                   key={cat.category_id}
                   onClick={() => trySelectCategory(cat)}
-                  className={`bg-white/5 mb-2 rounded-lg p-3 px-4 cursor-pointer transition-all
-                    ${isActive ? 'bg-[rgba(111,97,239,0.4)] text-white border-l-4 border-l-[#6F61EF] scale-[1.02]' : 'text-white border-l-4 border-l-transparent'}
-                    ${isFocused ? 'border-4 border-[#6F61EF] m-1' : 'border-4 border-transparent m-1'}`}
+                  className={`mb-2 rounded-lg p-3 px-4 cursor-pointer transition-all flex justify-between items-center
+                    ${isActive ? 'bg-[rgba(111,97,239,0.4)] text-white border-l-4 border-l-[#6F61EF] scale-[1.02]' : 'bg-white/5 text-white border-l-4 border-l-transparent'}
+                    ${isFocused ? 'border-4 border-[#6F61EF] bg-[rgba(111,97,239,0.25)] m-1' : 'border-4 border-transparent m-1'}`}
                 >
-                  {cat.category_name}
+                  <span>{cat.category_name}</span>
+                  <span className="text-white/70">{count}</span>
                 </div>
               );
             })}
