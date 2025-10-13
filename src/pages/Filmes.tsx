@@ -40,8 +40,9 @@ const Filmes = () => {
   const [overlayActive, setOverlayActive] = useState(false);
   const [movieBasic, setMovieBasic] = useState<any>(null);
   const [movieInfo, setMovieInfo] = useState<any>(null);
-  const [overlayFocus, setOverlayFocus] = useState<"back" | "watch" | "fav">("back");
+  const [overlayFocus, setOverlayFocus] = useState<"back" | "watch" | "trailer" | "fav">("back");
   const [cast, setCast] = useState<any[]>([]);
+  const [trailers, setTrailers] = useState<any[]>([]);
 
   // Player states
   const [playerActive, setPlayerActive] = useState(false);
@@ -183,6 +184,7 @@ const Filmes = () => {
       const tmdbId = data?.info?.tmdb_id;
       if (tmdbId) {
         await loadCast(tmdbId);
+        await loadTrailers(tmdbId);
       }
     } catch (err) {
       console.error("Erro ao carregar info do filme:", err);
@@ -202,10 +204,27 @@ const Filmes = () => {
     }
   };
 
+  const loadTrailers = async (tmdbId: string) => {
+    try {
+      const url = `https://api.themoviedb.org/3/movie/${tmdbId}/videos?api_key=${TMDB_KEY}&language=pt-BR`;
+      const res = await fetch(url);
+      const data = await res.json();
+      if (data.results) {
+        const youtubeTrailers = data.results.filter(
+          (v: any) => v.type === "Trailer" && v.site === "YouTube"
+        );
+        setTrailers(youtubeTrailers);
+      }
+    } catch (e) {
+      console.error("Erro ao carregar trailers:", e);
+    }
+  };
+
   const closeInfoOverlay = () => {
     if (playerActive) closePlayer();
     setOverlayActive(false);
     setCast([]);
+    setTrailers([]);
     setFocusSection("movies");
   };
 
@@ -261,6 +280,14 @@ const Filmes = () => {
 
     if (currentCategory?.category_id === "favorites") {
       loadMovies("favorites", movies);
+    }
+  };
+
+  const openTrailer = () => {
+    if (trailers.length > 0) {
+      const trailer = trailers[0];
+      const youtubeUrl = `https://www.youtube.com/watch?v=${trailer.key}`;
+      window.open(youtubeUrl, '_blank');
     }
   };
 
@@ -374,15 +401,18 @@ const Filmes = () => {
       } else {
         if (e.key === "ArrowRight") {
           if (overlayFocus === "back") setOverlayFocus("watch");
-          else if (overlayFocus === "watch") setOverlayFocus("fav");
+          else if (overlayFocus === "watch") setOverlayFocus("trailer");
+          else if (overlayFocus === "trailer") setOverlayFocus("fav");
           else if (overlayFocus === "fav") setOverlayFocus("back");
         } else if (e.key === "ArrowLeft") {
-          if (overlayFocus === "fav") setOverlayFocus("watch");
+          if (overlayFocus === "fav") setOverlayFocus("trailer");
+          else if (overlayFocus === "trailer") setOverlayFocus("watch");
           else if (overlayFocus === "watch") setOverlayFocus("back");
           else if (overlayFocus === "back") setOverlayFocus("fav");
         } else if (e.key === "Enter" || e.key === "OK") {
           if (overlayFocus === "watch") openPlayer();
           else if (overlayFocus === "back") closeInfoOverlay();
+          else if (overlayFocus === "trailer") openTrailer();
           else if (overlayFocus === "fav") toggleFavorite();
         } else if (e.key === "Escape" || e.key === "Backspace") {
           closeInfoOverlay();
@@ -633,6 +663,15 @@ const Filmes = () => {
                                ${overlayFocus === "watch" ? "border-[6px] border-[#6F61EF]" : "border-[6px] border-transparent"}`}
                   >
                     ▶ Assistir
+                  </button>
+                  <button
+                    onClick={openTrailer}
+                    disabled={trailers.length === 0}
+                    className={`flex-[0_0_200px] text-center bg-white/[0.08] rounded-[14px] text-white px-[26px] py-[14px] text-xl cursor-pointer transition-all
+                               ${overlayFocus === "trailer" ? "border-[6px] border-[#6F61EF]" : "border-[6px] border-transparent"}
+                               ${trailers.length === 0 ? "opacity-50 cursor-not-allowed" : ""}`}
+                  >
+                    🎬 Trailer
                   </button>
                   <button
                     onClick={toggleFavorite}
