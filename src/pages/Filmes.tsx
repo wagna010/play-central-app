@@ -67,11 +67,27 @@ const Filmes = () => {
     setCategories(cats);
     setMovies(movs);
 
-    if (cats.length > 0) {
+    if (cats.length > 0 && movs.length > 0) {
       const favIds = JSON.parse(localStorage.getItem('fav_movies') || '[]');
       const hasFavs = movs.some((m: Movie) => favIds.includes(m.stream_id));
       let startIndex = hasFavs ? 1 : (cats.length > 2 ? 2 : 0);
-      selectCategory(startIndex);
+      
+      const cat = cats[startIndex];
+      setCurrentCategory(cat);
+      
+      const favIdsFilter = JSON.parse(localStorage.getItem('fav_movies') || '[]');
+      let filtered: Movie[];
+      if (cat.category_id === 'favorites') {
+        filtered = movs.filter(m => favIdsFilter.includes(m.stream_id));
+      } else if (cat.category_id && cat.category_id !== 'all') {
+        filtered = movs.filter(m => m.category_id === cat.category_id);
+      } else {
+        filtered = movs;
+      }
+      
+      setFilteredMovies(filtered);
+      setFocusSection('categories');
+      setFocusIndex(startIndex);
     }
   }, []);
 
@@ -80,27 +96,27 @@ const Filmes = () => {
     return isNaN(num) ? 'N/A' : num.toFixed(1);
   };
 
-  const selectCategory = (index: number) => {
-    const cat = categories[index];
-    setCurrentCategory(cat);
-    loadMovies(cat.category_id);
-    setFocusSection('movies');
-    setFocusIndex(0);
-  };
-
-  const loadMovies = (categoryId: string) => {
+  const loadMovies = (categoryId: string, movieList: Movie[]) => {
     const favIds = JSON.parse(localStorage.getItem('fav_movies') || '[]');
     
     let filtered: Movie[];
     if (categoryId === 'favorites') {
-      filtered = movies.filter(m => favIds.includes(m.stream_id));
+      filtered = movieList.filter(m => favIds.includes(m.stream_id));
     } else if (categoryId && categoryId !== 'all') {
-      filtered = movies.filter(m => m.category_id === categoryId);
+      filtered = movieList.filter(m => m.category_id === categoryId);
     } else {
-      filtered = movies;
+      filtered = movieList;
     }
 
     setFilteredMovies(filtered);
+  };
+
+  const selectCategory = (index: number) => {
+    const cat = categories[index];
+    setCurrentCategory(cat);
+    loadMovies(cat.category_id, movies);
+    setFocusSection('movies');
+    setFocusIndex(0);
   };
 
   const applySearch = () => {
@@ -115,7 +131,7 @@ const Filmes = () => {
     if (searchTerm) {
       applySearch();
     } else if (currentCategory) {
-      loadMovies(currentCategory.category_id);
+      loadMovies(currentCategory.category_id, movies);
     }
   }, [searchTerm]);
 
@@ -214,7 +230,7 @@ const Filmes = () => {
     localStorage.setItem('fav_movies', JSON.stringify(favs));
 
     if (currentCategory?.category_id === 'favorites') {
-      loadMovies('favorites');
+      loadMovies('favorites', movies);
     }
   };
 
