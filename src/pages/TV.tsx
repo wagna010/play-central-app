@@ -47,6 +47,7 @@ const TV = () => {
   const [pinOverlayVisible, setPinOverlayVisible] = useState(false);
   const [pinInput, setPinInput] = useState('');
   const [pendingCategory, setPendingCategory] = useState<Category | null>(null);
+  const [favorites, setFavorites] = useState<number[]>([]);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const hlsRef = useRef<any>(null);
@@ -79,6 +80,10 @@ const TV = () => {
     setCategories(categoriesData);
     setChannels(channelsData);
     setFilteredChannels(channelsData);
+    
+    // Carregar favoritos no state
+    const favs = JSON.parse(localStorage.getItem('fav_channels') || '[]');
+    setFavorites(favs);
   }, [navigate, username, server_info.url]);
 
   useEffect(() => {
@@ -202,6 +207,7 @@ const TV = () => {
       setCurrentChannel(ch);
       playChannel(ch);
       loadEPG(ch.stream_id);
+      setMenuVisible(false); // Esconde o menu ao abrir um canal
     } else {
       toggleFullscreen();
     }
@@ -226,6 +232,7 @@ const TV = () => {
     }
     
     localStorage.setItem('fav_channels', JSON.stringify(favs));
+    setFavorites(favs); // Atualiza o state para forçar re-render
     
     // Se estiver na categoria favoritos, recarrega
     if (currentCategory?.category_id === 'favorites') {
@@ -239,6 +246,8 @@ const TV = () => {
   };
 
   useEffect(() => {
+    let longPressTimer: NodeJS.Timeout | null = null;
+
     const handleKeyDown = (e: KeyboardEvent) => {
       // Back button
       if (e.keyCode === 10009) {
@@ -265,6 +274,20 @@ const TV = () => {
         return;
       }
 
+      // Long press com Enter/OK para favoritar
+      if ((e.key === 'Enter' || e.key === 'OK') && focusPanel === 'channels') {
+        if (!longPressTimer) {
+          longPressTimer = setTimeout(() => {
+            const channel = filteredChannels[focusIndex];
+            if (channel) {
+              toggleFavorite(channel);
+              longPressTimer = null;
+            }
+          }, 800);
+        }
+        return;
+      }
+
       switch (e.key) {
         case 'ArrowUp':
           moveFocus(-1);
@@ -278,14 +301,32 @@ const TV = () => {
         case 'ArrowRight':
           moveFocusSide('right');
           break;
-        case 'Enter':
+      }
+    };
+
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if ((e.key === 'Enter' || e.key === 'OK') && longPressTimer) {
+        clearTimeout(longPressTimer);
+        longPressTimer = null;
+        
+        // Se não foi long press, executa ação normal
+        if (focusPanel === 'channels') {
+          const channel = filteredChannels[focusIndex];
+          if (channel) selectChannel(channel);
+        } else {
           enterFocus();
-          break;
+        }
       }
     };
 
     document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
+    document.addEventListener('keyup', handleKeyUp);
+    
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('keyup', handleKeyUp);
+      if (longPressTimer) clearTimeout(longPressTimer);
+    };
   }, [focusPanel, focusIndex, menuVisible, filteredChannels, currentCategory, navigate]);
 
   const moveFocus = (delta: number) => {
@@ -425,7 +466,7 @@ const TV = () => {
           <div className="flex-1 overflow-y-auto pr-2 [&::-webkit-scrollbar]:w-[6px] [&::-webkit-scrollbar-thumb]:bg-white/15 [&::-webkit-scrollbar-thumb]:rounded-[3px]">
             {filteredChannels.map((ch, index) => {
               const isFocused = focusPanel === 'channels' && focusIndex === index;
-              const isFavorite = JSON.parse(localStorage.getItem('fav_channels') || '[]').includes(ch.stream_id);
+              const isFavorite = favorites.includes(ch.stream_id);
               return (
                 <div
                   key={ch.stream_id}
