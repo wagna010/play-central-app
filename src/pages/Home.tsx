@@ -85,12 +85,36 @@ const Home = () => {
     localStorage.setItem('vod_last_update', agora.toString());
   };
 
+  const atualizarListasTV = async (force = false) => {
+    const agora = Date.now();
+    const ultimo = parseInt(localStorage.getItem('tv_last_update') || '0');
+    const umDia = 86400000;
+    
+    if (!force && agora - ultimo < umDia && localStorage.getItem('tv_categories')) return;
+    
+    const user = JSON.parse(localStorage.getItem('user_info') || '{}');
+    const server = JSON.parse(localStorage.getItem('server_info') || '{}');
+    const base = `http://${server.url}:${server.port}/player_api.php?username=${user.username}&password=${user.password}`;
+    
+    const [cat, str] = await Promise.all([
+      fetch(`${base}&action=get_live_categories`),
+      fetch(`${base}&action=get_live_streams`)
+    ]);
+    
+    localStorage.setItem('tv_categories', JSON.stringify(await cat.json()));
+    localStorage.setItem('tv_streams', JSON.stringify(await str.json()));
+    localStorage.setItem('tv_last_update', agora.toString());
+  };
+
   const handleMenuClick = async (type: string) => {
-    if (type === 'filmes') {
+    if (type === 'tv') {
+      await atualizarListasTV();
+      navigate('/tv');
+    } else if (type === 'filmes') {
       await atualizarListasFilmes();
       navigate('/filmes');
     }
-    // Outras navegações aqui (TV, Séries, Conta)
+    // Outras navegações aqui (Séries, Conta)
   };
 
   const handleUpdateClick = () => {
