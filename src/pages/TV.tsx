@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from "@/hooks/use-toast";
 
 interface Category {
   category_id: string;
@@ -40,6 +41,9 @@ const TV = () => {
   const [menuVisible, setMenuVisible] = useState(true);
   const [loading, setLoading] = useState(false);
   
+  const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
+  const [longPressChannel, setLongPressChannel] = useState<Channel | null>(null);
+  
   const [pinOverlayVisible, setPinOverlayVisible] = useState(false);
   const [pinInput, setPinInput] = useState('');
   const [pendingCategory, setPendingCategory] = useState<Category | null>(null);
@@ -66,6 +70,11 @@ const TV = () => {
 
     const categoriesData: Category[] = JSON.parse(cats);
     const channelsData: Channel[] = JSON.parse(chans);
+
+    // Adicionar categoria Favoritos se não existir
+    if (categoriesData.length > 0 && !categoriesData.find(c => c.category_name === "Favoritos")) {
+      categoriesData.splice(0, 0, { category_id: "favorites", category_name: "⭐ Favoritos" });
+    }
 
     setCategories(categoriesData);
     setChannels(channelsData);
@@ -142,7 +151,12 @@ const TV = () => {
   const selectCategory = (cat: Category | null) => {
     setCurrentCategory(cat);
     
-    if (cat) {
+    const favIds = JSON.parse(localStorage.getItem('fav_channels') || '[]');
+    
+    if (cat?.category_id === 'favorites') {
+      const filtered = channels.filter(c => favIds.includes(c.stream_id));
+      setFilteredChannels(filtered);
+    } else if (cat) {
       const filtered = channels.filter(c => c.category_id === cat.category_id);
       setFilteredChannels(filtered);
     } else {
@@ -178,13 +192,45 @@ const TV = () => {
     }
   };
 
-  const selectChannel = (ch: Channel) => {
+  const selectChannel = (ch: Channel, isLongPress = false) => {
+    if (isLongPress) {
+      toggleFavorite(ch);
+      return;
+    }
+    
     if (!currentChannel || currentChannel.stream_id !== ch.stream_id) {
       setCurrentChannel(ch);
       playChannel(ch);
       loadEPG(ch.stream_id);
     } else {
       toggleFullscreen();
+    }
+  };
+
+  const toggleFavorite = (channel: Channel) => {
+    let favs = JSON.parse(localStorage.getItem('fav_channels') || '[]');
+    const idx = favs.indexOf(channel.stream_id);
+    
+    if (idx >= 0) {
+      favs.splice(idx, 1);
+      toast({
+        title: "Removido dos favoritos",
+        description: channel.name,
+      });
+    } else {
+      favs.push(channel.stream_id);
+      toast({
+        title: "⭐ Adicionado aos favoritos",
+        description: channel.name,
+      });
+    }
+    
+    localStorage.setItem('fav_channels', JSON.stringify(favs));
+    
+    // Se estiver na categoria favoritos, recarrega
+    if (currentCategory?.category_id === 'favorites') {
+      const filtered = channels.filter(c => favs.includes(c.stream_id));
+      setFilteredChannels(filtered);
     }
   };
 
@@ -211,6 +257,13 @@ const TV = () => {
       }
 
       if (!menuVisible) return;
+
+      // Tecla 0 ou F2 para favoritar
+      if ((e.key === '0' || e.key === 'F2') && focusPanel === 'channels') {
+        const channel = filteredChannels[focusIndex];
+        if (channel) toggleFavorite(channel);
+        return;
+      }
 
       switch (e.key) {
         case 'ArrowUp':
@@ -330,12 +383,15 @@ const TV = () => {
         }`}
       >
         {/* Categories Panel */}
-        <div className="flex-1 flex flex-col overflow-hidden">
+        <div 
+          className="flex-1 flex flex-col overflow-hidden"
+          style={{ pointerEvents: focusPanel === 'categories' ? 'auto' : 'none' }}
+        >
           <div className="flex-1 overflow-y-auto pr-2 [&::-webkit-scrollbar]:w-[6px] [&::-webkit-scrollbar-thumb]:bg-white/15 [&::-webkit-scrollbar-thumb]:rounded-[3px]">
             <div
               onClick={() => selectCategory(null)}
               className={`bg-white/5 mb-2 rounded-lg p-3 px-4 cursor-pointer transition-all
-                ${currentCategory === null ? 'bg-[rgba(111,97,239,0.4)] text-white' : 'text-white'}
+                ${currentCategory === null ? 'bg-[rgba(111,97,239,0.4)] text-white border-l-4 border-l-[#6F61EF] scale-[1.02]' : 'text-white border-l-4 border-l-transparent'}
                 ${focusPanel === 'categories' && focusIndex === 0 ? 'border-4 border-[#6F61EF]' : 'border-4 border-transparent'}`}
             >
               Todos os Canais
@@ -348,7 +404,7 @@ const TV = () => {
                   key={cat.category_id}
                   onClick={() => trySelectCategory(cat)}
                   className={`bg-white/5 mb-2 rounded-lg p-3 px-4 cursor-pointer transition-all
-                    ${isActive ? 'bg-[rgba(111,97,239,0.4)] text-white' : 'text-white'}
+                    ${isActive ? 'bg-[rgba(111,97,239,0.4)] text-white border-l-4 border-l-[#6F61EF] scale-[1.02]' : 'text-white border-l-4 border-l-transparent'}
                     ${isFocused ? 'border-4 border-[#6F61EF]' : 'border-4 border-transparent'}`}
                 >
                   {cat.category_name}
@@ -359,17 +415,46 @@ const TV = () => {
         </div>
 
         {/* Channels Panel */}
-        <div className="flex-1 flex flex-col overflow-hidden">
+        <div 
+          className="flex-1 flex flex-col overflow-hidden"
+          style={{ pointerEvents: focusPanel === 'channels' ? 'auto' : 'none' }}
+        >
+          <div className="bg-white/10 p-2 mb-2 rounded text-xs text-white/70 text-center">
+            Mantenha pressionado o canal para adicionar aos favoritos | Tecla 0
+          </div>
           <div className="flex-1 overflow-y-auto pr-2 [&::-webkit-scrollbar]:w-[6px] [&::-webkit-scrollbar-thumb]:bg-white/15 [&::-webkit-scrollbar-thumb]:rounded-[3px]">
             {filteredChannels.map((ch, index) => {
               const isFocused = focusPanel === 'channels' && focusIndex === index;
+              const isFavorite = JSON.parse(localStorage.getItem('fav_channels') || '[]').includes(ch.stream_id);
               return (
                 <div
                   key={ch.stream_id}
                   onClick={() => selectChannel(ch)}
-                  className={`bg-white/5 mb-2 rounded-lg p-3 px-4 cursor-pointer text-white transition-all
+                  onMouseDown={() => {
+                    const timer = setTimeout(() => {
+                      selectChannel(ch, true);
+                    }, 800);
+                    setLongPressTimer(timer);
+                    setLongPressChannel(ch);
+                  }}
+                  onMouseUp={() => {
+                    if (longPressTimer) {
+                      clearTimeout(longPressTimer);
+                      setLongPressTimer(null);
+                    }
+                  }}
+                  onMouseLeave={() => {
+                    if (longPressTimer) {
+                      clearTimeout(longPressTimer);
+                      setLongPressTimer(null);
+                    }
+                  }}
+                  className={`bg-white/5 mb-2 rounded-lg p-3 px-4 cursor-pointer text-white transition-all relative
                     ${isFocused ? 'border-4 border-[#6F61EF]' : 'border-4 border-transparent'}`}
                 >
+                  {isFavorite && (
+                    <span className="absolute top-2 right-2 text-yellow-400">⭐</span>
+                  )}
                   {ch.name}
                 </div>
               );
