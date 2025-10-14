@@ -79,7 +79,7 @@ const TV = () => {
 
     setCategories(categoriesData);
     setChannels(channelsData);
-    setFilteredChannels(channelsData);
+    setFilteredChannels([]); // Inicia vazio até selecionar uma categoria
     
     // Carregar favoritos no state
     const favs = JSON.parse(localStorage.getItem('fav_channels') || '[]');
@@ -306,6 +306,11 @@ const TV = () => {
 
     const handleKeyUp = (e: KeyboardEvent) => {
       if (e.key === 'Enter' || e.key === 'OK') {
+        // Se menu estava fechado, não processar (pois foi processado no keydown)
+        if (!menuVisible) {
+          return;
+        }
+        
         if (longPressTimer) {
           clearTimeout(longPressTimer);
           longPressTimer = null;
