@@ -85,11 +85,6 @@ const TV = () => {
     // Carregar favoritos no state
     const favs = JSON.parse(localStorage.getItem("fav_channels") || "[]");
     setFavorites(favs);
-
-    // Definir foco inicial e selecionar "Todos os Canais" automaticamente
-    setFocusPanel('categories');
-    setFocusIndex(0);
-    selectCategory(null);
   }, [navigate, username, server_info.url]);
 
   useEffect(() => {
