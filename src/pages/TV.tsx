@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
 
 interface Category {
@@ -22,12 +22,12 @@ interface EPGItem {
 
 const TV = () => {
   const navigate = useNavigate();
-  
-  const user_info = JSON.parse(localStorage.getItem('user_info') || '{}');
-  const server_info = JSON.parse(localStorage.getItem('server_info') || '{}');
-  const username = user_info.username || '';
-  const password = user_info.password || '';
-  const baseURL = `${server_info.server_protocol || 'http'}://${server_info.url}:${server_info.port}`;
+
+  const user_info = JSON.parse(localStorage.getItem("user_info") || "{}");
+  const server_info = JSON.parse(localStorage.getItem("server_info") || "{}");
+  const username = user_info.username || "";
+  const password = user_info.password || "";
+  const baseURL = `${server_info.server_protocol || "http"}://${server_info.url}:${server_info.port}`;
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [channels, setChannels] = useState<Channel[]>([]);
@@ -35,17 +35,17 @@ const TV = () => {
   const [currentCategory, setCurrentCategory] = useState<Category | null>(null);
   const [currentChannel, setCurrentChannel] = useState<Channel | null>(null);
   const [epgData, setEpgData] = useState<EPGItem[]>([]);
-  
-  const [focusPanel, setFocusPanel] = useState<'categories' | 'channels'>('categories');
+
+  const [focusPanel, setFocusPanel] = useState<"categories" | "channels">("categories");
   const [focusIndex, setFocusIndex] = useState(0);
   const [menuVisible, setMenuVisible] = useState(true);
   const [loading, setLoading] = useState(false);
-  
+
   const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
   const [longPressChannel, setLongPressChannel] = useState<Channel | null>(null);
-  
+
   const [pinOverlayVisible, setPinOverlayVisible] = useState(false);
-  const [pinInput, setPinInput] = useState('');
+  const [pinInput, setPinInput] = useState("");
   const [pendingCategory, setPendingCategory] = useState<Category | null>(null);
   const [favorites, setFavorites] = useState<number[]>([]);
 
@@ -56,17 +56,17 @@ const TV = () => {
 
   useEffect(() => {
     if (!username || !server_info.url) {
-      alert('Erro: dados do login não encontrados.');
-      navigate('/');
+      alert("Erro: dados do login não encontrados.");
+      navigate("/");
       return;
     }
 
-    const cats = localStorage.getItem('tv_categories');
-    const chans = localStorage.getItem('tv_streams');
-    
+    const cats = localStorage.getItem("tv_categories");
+    const chans = localStorage.getItem("tv_streams");
+
     if (!cats || !chans) {
-      alert('Listas de canais não encontradas. Atualize na Home.');
-      navigate('/home');
+      alert("Listas de canais não encontradas. Atualize na Home.");
+      navigate("/home");
       return;
     }
 
@@ -74,22 +74,22 @@ const TV = () => {
     const channelsData: Channel[] = JSON.parse(chans);
 
     // Adicionar categoria Favoritos se não existir
-    if (categoriesData.length > 0 && !categoriesData.find(c => c.category_name === "Favoritos")) {
+    if (categoriesData.length > 0 && !categoriesData.find((c) => c.category_name === "Favoritos")) {
       categoriesData.splice(0, 0, { category_id: "favorites", category_name: "⭐ Favoritos" });
     }
 
     setCategories(categoriesData);
     setChannels(channelsData);
     setFilteredChannels([]); // Inicia vazio até selecionar uma categoria
-    
+
     // Carregar favoritos no state
-    const favs = JSON.parse(localStorage.getItem('fav_channels') || '[]');
+    const favs = JSON.parse(localStorage.getItem("fav_channels") || "[]");
     setFavorites(favs);
   }, [navigate, username, server_info.url]);
 
   useEffect(() => {
-    const script = document.createElement('script');
-    script.src = 'https://cdn.jsdelivr.net/npm/hls.js@latest';
+    const script = document.createElement("script");
+    script.src = "https://cdn.jsdelivr.net/npm/hls.js@latest";
     script.async = true;
     document.body.appendChild(script);
     return () => {
@@ -121,7 +121,9 @@ const TV = () => {
     setLoading(true);
 
     if (hlsRef.current) {
-      try { hlsRef.current.destroy(); } catch {}
+      try {
+        hlsRef.current.destroy();
+      } catch {}
       hlsRef.current = null;
     }
 
@@ -132,15 +134,18 @@ const TV = () => {
       hls.on((window as any).Hls.Events.MANIFEST_PARSED, () => {
         if (videoRef.current) {
           videoRef.current.muted = true;
-          videoRef.current.play().then(() => {
-            setLoading(false);
-            setTimeout(() => {
-              if (videoRef.current) videoRef.current.muted = false;
-            }, 800);
-          }).catch(() => {
-            videoRef.current?.play();
-            setLoading(false);
-          });
+          videoRef.current
+            .play()
+            .then(() => {
+              setLoading(false);
+              setTimeout(() => {
+                if (videoRef.current) videoRef.current.muted = false;
+              }, 800);
+            })
+            .catch(() => {
+              videoRef.current?.play();
+              setLoading(false);
+            });
         }
       });
       hlsRef.current = hls;
@@ -156,29 +161,29 @@ const TV = () => {
 
   const selectCategory = (cat: Category | null) => {
     setCurrentCategory(cat);
-    
-    const favIds = JSON.parse(localStorage.getItem('fav_channels') || '[]');
-    
-    if (cat?.category_id === 'favorites') {
-      const filtered = channels.filter(c => favIds.includes(c.stream_id));
+
+    const favIds = JSON.parse(localStorage.getItem("fav_channels") || "[]");
+
+    if (cat?.category_id === "favorites") {
+      const filtered = channels.filter((c) => favIds.includes(c.stream_id));
       setFilteredChannels(filtered);
     } else if (cat) {
-      const filtered = channels.filter(c => c.category_id === cat.category_id);
+      const filtered = channels.filter((c) => c.category_id === cat.category_id);
       setFilteredChannels(filtered);
     } else {
       setFilteredChannels(channels);
     }
-    
-    setFocusPanel('channels');
+
+    setFocusPanel("channels");
     setFocusIndex(0);
   };
 
   const trySelectCategory = (cat: Category) => {
     const name = cat.category_name.toLowerCase();
-    if (name.includes('adult')) {
+    if (name.includes("adult")) {
       setPendingCategory(cat);
       setPinOverlayVisible(true);
-      setPinInput('');
+      setPinInput("");
       setTimeout(() => pinInputRef.current?.focus(), 100);
     } else {
       selectCategory(cat);
@@ -188,12 +193,12 @@ const TV = () => {
   const handlePinInput = (value: string) => {
     setPinInput(value);
     if (value.length === 4) {
-      const correctPin = localStorage.getItem('pin_code') || '0000';
+      const correctPin = localStorage.getItem("pin_code") || "0000";
       setPinOverlayVisible(false);
       if (value === correctPin && pendingCategory) {
         selectCategory(pendingCategory);
       }
-      setPinInput('');
+      setPinInput("");
       setPendingCategory(null);
     }
   };
@@ -203,7 +208,7 @@ const TV = () => {
       toggleFavorite(ch);
       return;
     }
-    
+
     if (!currentChannel || currentChannel.stream_id !== ch.stream_id) {
       setCurrentChannel(ch);
       playChannel(ch);
@@ -215,9 +220,9 @@ const TV = () => {
   };
 
   const toggleFavorite = (channel: Channel) => {
-    let favs = JSON.parse(localStorage.getItem('fav_channels') || '[]');
+    let favs = JSON.parse(localStorage.getItem("fav_channels") || "[]");
     const idx = favs.indexOf(channel.stream_id);
-    
+
     if (idx >= 0) {
       favs.splice(idx, 1);
       toast({
@@ -231,13 +236,13 @@ const TV = () => {
         description: channel.name,
       });
     }
-    
-    localStorage.setItem('fav_channels', JSON.stringify(favs));
+
+    localStorage.setItem("fav_channels", JSON.stringify(favs));
     setFavorites(favs); // Atualiza o state para forçar re-render
-    
+
     // Se estiver na categoria favoritos, recarrega
-    if (currentCategory?.category_id === 'favorites') {
-      const filtered = channels.filter(c => favs.includes(c.stream_id));
+    if (currentCategory?.category_id === "favorites") {
+      const filtered = channels.filter((c) => favs.includes(c.stream_id));
       setFilteredChannels(filtered);
     }
   };
@@ -255,32 +260,32 @@ const TV = () => {
         if (!menuVisible) {
           toggleFullscreen();
         } else {
-          navigate('/home');
+          navigate("/home");
         }
         return;
       }
 
       // Enter to toggle menu when hidden
-      if (!menuVisible && e.key === 'Enter') {
+      if (!menuVisible && e.key === "Enter") {
         justOpenedMenuRef.current = true;
         toggleFullscreen();
         setTimeout(() => {
           justOpenedMenuRef.current = false;
-        }, 100);
+        }, 500);
         return;
       }
 
       if (!menuVisible) return;
 
       // Tecla 0 ou F2 para favoritar
-      if ((e.key === '0' || e.key === 'F2') && focusPanel === 'channels') {
+      if ((e.key === "0" || e.key === "F2") && focusPanel === "channels") {
         const channel = filteredChannels[focusIndex];
         if (channel) toggleFavorite(channel);
         return;
       }
 
       // Long press com Enter/OK para favoritar
-      if ((e.key === 'Enter' || e.key === 'OK') && focusPanel === 'channels') {
+      if ((e.key === "Enter" || e.key === "OK") && focusPanel === "channels") {
         if (!longPressTimer) {
           longPressTimer = setTimeout(() => {
             const channel = filteredChannels[focusIndex];
@@ -294,35 +299,35 @@ const TV = () => {
       }
 
       switch (e.key) {
-        case 'ArrowUp':
+        case "ArrowUp":
           moveFocus(-1);
           break;
-        case 'ArrowDown':
+        case "ArrowDown":
           moveFocus(1);
           break;
-        case 'ArrowLeft':
-          moveFocusSide('left');
+        case "ArrowLeft":
+          moveFocusSide("left");
           break;
-        case 'ArrowRight':
-          moveFocusSide('right');
+        case "ArrowRight":
+          moveFocusSide("right");
           break;
       }
     };
 
     const handleKeyUp = (e: KeyboardEvent) => {
-      if (e.key === 'Enter' || e.key === 'OK') {
+      if (e.key === "Enter" || e.key === "OK") {
         // Se acabamos de abrir o menu, não processar
         if (justOpenedMenuRef.current) {
           return;
         }
-        
+
         if (longPressTimer) {
           clearTimeout(longPressTimer);
           longPressTimer = null;
         }
-        
+
         // Executa ação normal (funciona tanto para categorias quanto canais)
-        if (focusPanel === 'channels') {
+        if (focusPanel === "channels") {
           const channel = filteredChannels[focusIndex];
           if (channel) selectChannel(channel);
         } else {
@@ -331,12 +336,12 @@ const TV = () => {
       }
     };
 
-    document.addEventListener('keydown', handleKeyDown);
-    document.addEventListener('keyup', handleKeyUp);
-    
+    document.addEventListener("keydown", handleKeyDown);
+    document.addEventListener("keyup", handleKeyUp);
+
     return () => {
-      document.removeEventListener('keydown', handleKeyDown);
-      document.removeEventListener('keyup', handleKeyUp);
+      document.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("keyup", handleKeyUp);
       if (longPressTimer) clearTimeout(longPressTimer);
     };
   }, [focusPanel, focusIndex, menuVisible, filteredChannels, currentCategory, navigate]);
@@ -347,14 +352,14 @@ const TV = () => {
     setFocusIndex(Math.max(0, Math.min(list.length - 1, focusIndex + delta)));
   };
 
-  const moveFocusSide = (dir: 'left' | 'right') => {
-    const panels: ('categories' | 'channels')[] = ['categories', 'channels'];
+  const moveFocusSide = (dir: "left" | "right") => {
+    const panels: ("categories" | "channels")[] = ["categories", "channels"];
     let idx = panels.indexOf(focusPanel);
-    idx = dir === 'right' ? Math.min(panels.length - 1, idx + 1) : Math.max(0, idx - 1);
+    idx = dir === "right" ? Math.min(panels.length - 1, idx + 1) : Math.max(0, idx - 1);
     setFocusPanel(panels[idx]);
 
-    if (panels[idx] === 'categories' && currentCategory) {
-      const catIndex = categories.findIndex(c => c.category_id === currentCategory.category_id);
+    if (panels[idx] === "categories" && currentCategory) {
+      const catIndex = categories.findIndex((c) => c.category_id === currentCategory.category_id);
       setFocusIndex(Math.max(0, catIndex + 1));
     } else {
       setFocusIndex(0);
@@ -362,19 +367,19 @@ const TV = () => {
   };
 
   const getList = () => {
-    if (focusPanel === 'categories') return ['all', ...categories];
-    if (focusPanel === 'channels') return filteredChannels;
+    if (focusPanel === "categories") return ["all", ...categories];
+    if (focusPanel === "channels") return filteredChannels;
     return [];
   };
 
   const enterFocus = () => {
-    if (focusPanel === 'categories') {
+    if (focusPanel === "categories") {
       if (focusIndex === 0) {
         selectCategory(null);
       } else {
         trySelectCategory(categories[focusIndex - 1]);
       }
-    } else if (focusPanel === 'channels') {
+    } else if (focusPanel === "channels") {
       const channel = filteredChannels[focusIndex];
       if (channel) selectChannel(channel);
     }
@@ -394,13 +399,13 @@ const TV = () => {
       const progress = total > 0 ? (elapsed / total) * 100 : 0;
       const isNow = now >= start && now < end;
       const title = decodeBase64(p.title);
-      const desc = decodeBase64(p.description || '');
+      const desc = decodeBase64(p.description || "");
 
       return (
         <div
           key={i}
           className={`bg-white/[0.08] rounded-lg p-3 px-4 mb-2 ${
-            isNow ? 'border-4 border-[#6F61EF] bg-[rgba(111,97,239,0.25)]' : 'border-4 border-transparent'
+            isNow ? "border-4 border-[#6F61EF] bg-[rgba(111,97,239,0.25)]" : "border-4 border-transparent"
           }`}
         >
           <div className="font-bold text-white">{title}</div>
@@ -412,8 +417,8 @@ const TV = () => {
             />
           </div>
           <div className="text-xs text-white mt-1">
-            {start.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })} -{' '}
-            {end.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+            {start.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })} -{" "}
+            {end.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
           </div>
         </div>
       );
@@ -431,40 +436,41 @@ const TV = () => {
 
       {/* Menu Container */}
       <div
-        className={`fixed top-0 left-0 w-full h-full flex gap-6 p-6 backdrop-blur-[16px] bg-black/35 z-10 transition-opacity duration-300 ${
-          menuVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'
+        className={`fixed top-0 left-0 w-full h-full flex gap-6 p-6 backdrop-blur-[16px] bg-black/70 z-10 transition-opacity duration-300 ${
+          menuVisible ? "opacity-100" : "opacity-0 pointer-events-none"
         }`}
       >
         {/* Categories Panel */}
-        <div 
+        <div
           className="flex-1 flex flex-col overflow-hidden"
-          style={{ pointerEvents: focusPanel === 'categories' ? 'auto' : 'none' }}
+          style={{ pointerEvents: focusPanel === "categories" ? "auto" : "none" }}
         >
           <div className="flex-1 overflow-y-auto pr-2 p-1 [&::-webkit-scrollbar]:w-[6px] [&::-webkit-scrollbar-thumb]:bg-white/15 [&::-webkit-scrollbar-thumb]:rounded-[3px]">
             <div
               onClick={() => selectCategory(null)}
               className={`mb-2 rounded-lg p-3 px-4 cursor-pointer transition-all flex justify-between items-center
-                ${currentCategory === null && filteredChannels.length > 0 ? 'bg-[rgba(111,97,239,0.4)] text-white border-l-4 border-l-[#6F61EF] scale-[1.02]' : 'bg-white/5 text-white border-l-4 border-l-transparent'}
-                ${focusPanel === 'categories' && focusIndex === 0 ? 'border-4 border-[#6F61EF] bg-[rgba(111,97,239,0.25)] m-1' : 'border-4 border-transparent m-1'}`}
+                ${currentCategory === null && filteredChannels.length > 0 ? "bg-[rgba(111,97,239,0.4)] text-white border-l-4 border-l-[#6F61EF] scale-[1.02]" : "bg-white/5 text-white border-l-4 border-l-transparent"}
+                ${focusPanel === "categories" && focusIndex === 0 ? "border-4 border-[#6F61EF] bg-[rgba(111,97,239,0.25)] m-1" : "border-4 border-transparent m-1"}`}
             >
               <span>Todos os Canais</span>
               <span className="text-white/70">{channels.length}</span>
             </div>
             {categories.map((cat, index) => {
-              const count = cat.category_id === 'favorites'
-                ? favorites.length
-                : channels.filter(c => c.category_id === cat.category_id).length;
-              
-              const isFocused = focusPanel === 'categories' && focusIndex === index + 1;
+              const count =
+                cat.category_id === "favorites"
+                  ? favorites.length
+                  : channels.filter((c) => c.category_id === cat.category_id).length;
+
+              const isFocused = focusPanel === "categories" && focusIndex === index + 1;
               const isActive = currentCategory?.category_id === cat.category_id;
-              
+
               return (
                 <div
                   key={cat.category_id}
                   onClick={() => trySelectCategory(cat)}
                   className={`mb-2 rounded-lg p-3 px-4 cursor-pointer transition-all flex justify-between items-center
-                    ${isActive ? 'bg-[rgba(111,97,239,0.4)] text-white border-l-4 border-l-[#6F61EF] scale-[1.02]' : 'bg-white/5 text-white border-l-4 border-l-transparent'}
-                    ${isFocused ? 'border-4 border-[#6F61EF] bg-[rgba(111,97,239,0.25)] m-1' : 'border-4 border-transparent m-1'}`}
+                    ${isActive ? "bg-[rgba(111,97,239,0.4)] text-white border-l-4 border-l-[#6F61EF] scale-[1.02]" : "bg-white/5 text-white border-l-4 border-l-transparent"}
+                    ${isFocused ? "border-4 border-[#6F61EF] bg-[rgba(111,97,239,0.25)] m-1" : "border-4 border-transparent m-1"}`}
                 >
                   <span>{cat.category_name}</span>
                   <span className="text-white/70">{count}</span>
@@ -475,16 +481,16 @@ const TV = () => {
         </div>
 
         {/* Channels Panel */}
-        <div 
+        <div
           className="flex-1 flex flex-col overflow-hidden"
-          style={{ pointerEvents: focusPanel === 'channels' ? 'auto' : 'none' }}
+          style={{ pointerEvents: focusPanel === "channels" ? "auto" : "none" }}
         >
           <div className="bg-white/10 p-2 mb-2 rounded text-xs text-white/70 text-center">
             Mantenha pressionado o canal para adicionar aos favoritos | Tecla 0
           </div>
           <div className="flex-1 overflow-y-auto pr-2 [&::-webkit-scrollbar]:w-[6px] [&::-webkit-scrollbar-thumb]:bg-white/15 [&::-webkit-scrollbar-thumb]:rounded-[3px]">
             {filteredChannels.map((ch, index) => {
-              const isFocused = focusPanel === 'channels' && focusIndex === index;
+              const isFocused = focusPanel === "channels" && focusIndex === index;
               const isFavorite = favorites.includes(ch.stream_id);
               return (
                 <div
@@ -510,11 +516,9 @@ const TV = () => {
                     }
                   }}
                   className={`bg-white/5 mb-2 rounded-lg p-3 px-4 cursor-pointer text-white transition-all relative
-                    ${isFocused ? 'border-4 border-[#6F61EF]' : 'border-4 border-transparent'}`}
+                    ${isFocused ? "border-4 border-[#6F61EF]" : "border-4 border-transparent"}`}
                 >
-                  {isFavorite && (
-                    <span className="absolute top-2 right-2 text-yellow-400">⭐</span>
-                  )}
+                  {isFavorite && <span className="absolute top-2 right-2 text-yellow-400">⭐</span>}
                   {ch.name}
                 </div>
               );
@@ -541,7 +545,7 @@ const TV = () => {
       {pinOverlayVisible && (
         <div
           className={`fixed inset-0 bg-black/65 backdrop-blur-[12px] flex items-center justify-center z-[100] transition-opacity duration-300 ${
-            pinOverlayVisible ? 'opacity-100' : 'opacity-0'
+            pinOverlayVisible ? "opacity-100" : "opacity-0"
           }`}
         >
           <div className="bg-[rgba(30,30,40,0.6)] border-2 border-[rgba(111,97,239,0.7)] rounded-[20px] p-10 px-[60px] text-center shadow-[0_0_25px_rgba(111,97,239,0.3)] animate-in fade-in zoom-in duration-300">
