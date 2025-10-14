@@ -52,6 +52,7 @@ const TV = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const hlsRef = useRef<any>(null);
   const pinInputRef = useRef<HTMLInputElement>(null);
+  const justOpenedMenuRef = useRef(false);
 
   useEffect(() => {
     if (!username || !server_info.url) {
@@ -261,7 +262,11 @@ const TV = () => {
 
       // Enter to toggle menu when hidden
       if (!menuVisible && e.key === 'Enter') {
+        justOpenedMenuRef.current = true;
         toggleFullscreen();
+        setTimeout(() => {
+          justOpenedMenuRef.current = false;
+        }, 100);
         return;
       }
 
@@ -306,8 +311,8 @@ const TV = () => {
 
     const handleKeyUp = (e: KeyboardEvent) => {
       if (e.key === 'Enter' || e.key === 'OK') {
-        // Se menu estava fechado, não processar (pois foi processado no keydown)
-        if (!menuVisible) {
+        // Se acabamos de abrir o menu, não processar
+        if (justOpenedMenuRef.current) {
           return;
         }
         
@@ -439,7 +444,7 @@ const TV = () => {
             <div
               onClick={() => selectCategory(null)}
               className={`mb-2 rounded-lg p-3 px-4 cursor-pointer transition-all flex justify-between items-center
-                ${currentCategory === null ? 'bg-[rgba(111,97,239,0.4)] text-white border-l-4 border-l-[#6F61EF] scale-[1.02]' : 'bg-white/5 text-white border-l-4 border-l-transparent'}
+                ${currentCategory === null && filteredChannels.length > 0 ? 'bg-[rgba(111,97,239,0.4)] text-white border-l-4 border-l-[#6F61EF] scale-[1.02]' : 'bg-white/5 text-white border-l-4 border-l-transparent'}
                 ${focusPanel === 'categories' && focusIndex === 0 ? 'border-4 border-[#6F61EF] bg-[rgba(111,97,239,0.25)] m-1' : 'border-4 border-transparent m-1'}`}
             >
               <span>Todos os Canais</span>
