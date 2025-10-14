@@ -353,7 +353,7 @@ const TV = () => {
     if (!list.length) return;
     const newIndex = Math.max(0, Math.min(list.length - 1, focusIndex + delta));
     setFocusIndex(newIndex);
-    
+
     // Scroll automático para o item focado
     setTimeout(() => {
       if (focusPanel === "categories") {
@@ -448,7 +448,7 @@ const TV = () => {
 
       {/* Menu Container */}
       <div
-        className={`fixed top-0 left-0 w-full h-full flex gap-6 p-6 backdrop-blur-[16px] bg-black/70 z-10 transition-opacity duration-300 ${
+        className={`fixed top-0 left-0 w-full h-full flex gap-3 p-3 backdrop-blur-[16px] bg-black/70 z-10 transition-opacity duration-300 ${
           menuVisible ? "opacity-100" : "opacity-0 pointer-events-none"
         }`}
       >
@@ -462,8 +462,8 @@ const TV = () => {
               ref={(el) => (categoryRefs.current[0] = el)}
               onClick={() => selectCategory(null)}
               className={`mb-2 rounded-lg cursor-pointer transition-all flex justify-between items-center
-                ${currentCategory === null && filteredChannels.length > 0 ? "bg-[rgba(111,97,239,0.4)] text-white border-l-4 border-l-[#6F61EF] scale-[1.02]" : "bg-white/5 text-white border-l-4 border-l-transparent"}
-                ${focusPanel === "categories" && focusIndex === 0 ? "border-4 border-[#6F61EF] bg-[rgba(111,97,239,0.25)] p-[0.625rem] px-[0.875rem] m-1" : "border-4 border-transparent p-3 px-4 m-1"}`}
+                ${currentCategory === null && filteredChannels.length > 0 ? "bg-[rgba(111,97,239,0.4)] text-white border-l-4 border-l-[#6F61EF] " : "bg-white/5 text-white border-l-4 border-l-transparent"}
+                ${focusPanel === "categories" && focusIndex === 0 ? "border-4 border-[#6F61EF] bg-[rgba(111,97,239,0.25)]" : "border-4 border-transparent"} p-3 px-4 m-1`}
             >
               <span>Todos os Canais</span>
               <span className="text-white/70">{channels.length}</span>
@@ -483,8 +483,8 @@ const TV = () => {
                   ref={(el) => (categoryRefs.current[index + 1] = el)}
                   onClick={() => trySelectCategory(cat)}
                   className={`mb-2 rounded-lg cursor-pointer transition-all flex justify-between items-center
-                    ${isActive ? "bg-[rgba(111,97,239,0.4)] text-white border-l-4 border-l-[#6F61EF] scale-[1.02]" : "bg-white/5 text-white border-l-4 border-l-transparent"}
-                    ${isFocused ? "border-4 border-[#6F61EF] bg-[rgba(111,97,239,0.25)] p-[0.625rem] px-[0.875rem] m-1" : "border-4 border-transparent p-3 px-4 m-1"}`}
+                    ${isActive ? "bg-[rgba(111,97,239,0.4)] text-white border-l-4 border-l-[#6F61EF] " : "bg-white/5 text-white border-l-4 border-l-transparent"}
+                    ${isFocused ? "border-4 border-[#6F61EF] bg-[rgba(111,97,239,0.25)]" : "border-4 border-transparent"} p-3 px-4 m-1`}
                 >
                   <span>{cat.category_name}</span>
                   <span className="text-white/70">{count}</span>
@@ -531,7 +531,7 @@ const TV = () => {
                     }
                   }}
                   className={`bg-white/5 mb-2 rounded-lg cursor-pointer text-white transition-all relative
-                    ${isFocused ? "border-4 border-[#6F61EF] p-[0.625rem] px-[0.875rem] m-1" : "border-4 border-transparent p-3 px-4 m-1"}`}
+                    ${isFocused ? "border-4 border-[#6F61EF]" : "border-4 border-transparent"} p-3 px-4 m-1`}
                 >
                   {isFavorite && <span className="absolute top-2 right-2 text-yellow-400">⭐</span>}
                   {ch.name}
