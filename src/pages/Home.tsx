@@ -1,12 +1,19 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+const DEMO_CONFIG = {
+  url: 'qetu.cc',
+  port: '8880',
+  username: 'fullip',
+  password: '5904441732'
+};
+
 const Home = () => {
   const navigate = useNavigate();
   const [focusIndex, setFocusIndex] = useState(1);
   const [inTopBar, setInTopBar] = useState(false);
   const [expDate, setExpDate] = useState('Vencimento: --/--/---- --:--');
-  const [userStatus, setUserStatus] = useState('Conectado: --');
+  const [userStatus, setUserStatus] = useState('Demo Mode');
 
   const icons = {
     tv: {
@@ -27,27 +34,42 @@ const Home = () => {
     }
   };
 
-  const validarLogin = () => {
-    const user_info = JSON.parse(localStorage.getItem('user_info') || '{}');
-    const server_info = JSON.parse(localStorage.getItem('server_info') || '{}');
-    if (!user_info.username || !user_info.password || !server_info.url) {
-      navigate('/');
+  const initializePlayer = async () => {
+    let playerUuid = localStorage.getItem('player_uuid');
+    
+    if (!playerUuid) {
+      playerUuid = crypto.randomUUID();
+      localStorage.setItem('player_uuid', playerUuid);
+      localStorage.setItem('player_first_access', new Date().toISOString());
+    }
+    
+    localStorage.setItem('player_last_access', new Date().toISOString());
+  };
+
+  const loadIPTVCredentials = () => {
+    const savedConfig = localStorage.getItem('iptv_config');
+    
+    if (savedConfig) {
+      return JSON.parse(savedConfig);
+    } else {
+      return DEMO_CONFIG;
     }
   };
 
   const atualizarDadosConta = async () => {
     try {
-      const user = JSON.parse(localStorage.getItem('user_info') || '{}');
-      const server = JSON.parse(localStorage.getItem('server_info') || '{}');
-      if (!user.username || !server.url) return;
+      const config = loadIPTVCredentials();
       
-      const apiUrl = `http://${server.url}:${server.port}/player_api.php?username=${user.username}&password=${user.password}`;
+      const apiUrl = `http://${config.url}:${config.port}/player_api.php?username=${config.username}&password=${config.password}`;
       const res = await fetch(apiUrl);
       const data = await res.json();
 
       if (data?.user_info?.auth == 1) {
         localStorage.setItem('user_info', JSON.stringify(data.user_info));
-        localStorage.setItem('server_info', JSON.stringify(data.server_info));
+        localStorage.setItem('server_info', JSON.stringify({
+          url: config.url,
+          port: config.port
+        }));
         
         const exp = new Date(parseInt(data.user_info.exp_date) * 1000);
         const dia = exp.getDate().toString().padStart(2, '0');
@@ -61,6 +83,7 @@ const Home = () => {
       }
     } catch (err) {
       console.error('Erro ao atualizar dados:', err);
+      setUserStatus('Demo Mode');
     }
   };
 
@@ -71,9 +94,8 @@ const Home = () => {
     
     if (!force && agora - ultimo < umDia && localStorage.getItem('vod_categories')) return;
     
-    const user = JSON.parse(localStorage.getItem('user_info') || '{}');
-    const server = JSON.parse(localStorage.getItem('server_info') || '{}');
-    const base = `http://${server.url}:${server.port}/player_api.php?username=${user.username}&password=${user.password}`;
+    const config = loadIPTVCredentials();
+    const base = `http://${config.url}:${config.port}/player_api.php?username=${config.username}&password=${config.password}`;
     
     const [cat, str] = await Promise.all([
       fetch(`${base}&action=get_vod_categories`),
@@ -92,9 +114,8 @@ const Home = () => {
     
     if (!force && agora - ultimo < umDia && localStorage.getItem('tv_categories')) return;
     
-    const user = JSON.parse(localStorage.getItem('user_info') || '{}');
-    const server = JSON.parse(localStorage.getItem('server_info') || '{}');
-    const base = `http://${server.url}:${server.port}/player_api.php?username=${user.username}&password=${user.password}`;
+    const config = loadIPTVCredentials();
+    const base = `http://${config.url}:${config.port}/player_api.php?username=${config.username}&password=${config.password}`;
     
     const [cat, str] = await Promise.all([
       fetch(`${base}&action=get_live_categories`),
@@ -113,8 +134,9 @@ const Home = () => {
     } else if (type === 'filmes') {
       await atualizarListasFilmes();
       navigate('/filmes');
+    } else if (type === 'conta') {
+      navigate('/conta');
     }
-    // Outras navegações aqui (Séries, Conta)
   };
 
   const handleUpdateClick = () => {
@@ -125,7 +147,7 @@ const Home = () => {
   };
 
   useEffect(() => {
-    validarLogin();
+    initializePlayer();
     atualizarDadosConta();
   }, []);
 
