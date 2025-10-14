@@ -53,6 +53,8 @@ const TV = () => {
   const hlsRef = useRef<any>(null);
   const pinInputRef = useRef<HTMLInputElement>(null);
   const justOpenedMenuRef = useRef(false);
+  const categoryRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const channelRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   useEffect(() => {
     if (!username || !server_info.url) {
@@ -349,7 +351,17 @@ const TV = () => {
   const moveFocus = (delta: number) => {
     const list = getList();
     if (!list.length) return;
-    setFocusIndex(Math.max(0, Math.min(list.length - 1, focusIndex + delta)));
+    const newIndex = Math.max(0, Math.min(list.length - 1, focusIndex + delta));
+    setFocusIndex(newIndex);
+    
+    // Scroll automático para o item focado
+    setTimeout(() => {
+      if (focusPanel === "categories") {
+        categoryRefs.current[newIndex]?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      } else if (focusPanel === "channels") {
+        channelRefs.current[newIndex]?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      }
+    }, 0);
   };
 
   const moveFocusSide = (dir: "left" | "right") => {
@@ -447,10 +459,11 @@ const TV = () => {
         >
           <div className="flex-1 overflow-y-auto pr-2 p-1 [&::-webkit-scrollbar]:w-[6px] [&::-webkit-scrollbar-thumb]:bg-white/15 [&::-webkit-scrollbar-thumb]:rounded-[3px]">
             <div
+              ref={(el) => (categoryRefs.current[0] = el)}
               onClick={() => selectCategory(null)}
-              className={`mb-2 rounded-lg p-3 px-4 cursor-pointer transition-all flex justify-between items-center
+              className={`mb-2 rounded-lg cursor-pointer transition-all flex justify-between items-center
                 ${currentCategory === null && filteredChannels.length > 0 ? "bg-[rgba(111,97,239,0.4)] text-white border-l-4 border-l-[#6F61EF] scale-[1.02]" : "bg-white/5 text-white border-l-4 border-l-transparent"}
-                ${focusPanel === "categories" && focusIndex === 0 ? "border-4 border-[#6F61EF] bg-[rgba(111,97,239,0.25)] m-1" : "border-4 border-transparent m-1"}`}
+                ${focusPanel === "categories" && focusIndex === 0 ? "border-4 border-[#6F61EF] bg-[rgba(111,97,239,0.25)] p-[0.625rem] px-[0.875rem] m-1" : "border-4 border-transparent p-3 px-4 m-1"}`}
             >
               <span>Todos os Canais</span>
               <span className="text-white/70">{channels.length}</span>
@@ -467,10 +480,11 @@ const TV = () => {
               return (
                 <div
                   key={cat.category_id}
+                  ref={(el) => (categoryRefs.current[index + 1] = el)}
                   onClick={() => trySelectCategory(cat)}
-                  className={`mb-2 rounded-lg p-3 px-4 cursor-pointer transition-all flex justify-between items-center
+                  className={`mb-2 rounded-lg cursor-pointer transition-all flex justify-between items-center
                     ${isActive ? "bg-[rgba(111,97,239,0.4)] text-white border-l-4 border-l-[#6F61EF] scale-[1.02]" : "bg-white/5 text-white border-l-4 border-l-transparent"}
-                    ${isFocused ? "border-4 border-[#6F61EF] bg-[rgba(111,97,239,0.25)] m-1" : "border-4 border-transparent m-1"}`}
+                    ${isFocused ? "border-4 border-[#6F61EF] bg-[rgba(111,97,239,0.25)] p-[0.625rem] px-[0.875rem] m-1" : "border-4 border-transparent p-3 px-4 m-1"}`}
                 >
                   <span>{cat.category_name}</span>
                   <span className="text-white/70">{count}</span>
@@ -495,6 +509,7 @@ const TV = () => {
               return (
                 <div
                   key={ch.stream_id}
+                  ref={(el) => (channelRefs.current[index] = el)}
                   onClick={() => selectChannel(ch)}
                   onMouseDown={() => {
                     const timer = setTimeout(() => {
@@ -515,8 +530,8 @@ const TV = () => {
                       setLongPressTimer(null);
                     }
                   }}
-                  className={`bg-white/5 mb-2 rounded-lg p-3 px-4 cursor-pointer text-white transition-all relative
-                    ${isFocused ? "border-4 border-[#6F61EF]" : "border-4 border-transparent"}`}
+                  className={`bg-white/5 mb-2 rounded-lg cursor-pointer text-white transition-all relative
+                    ${isFocused ? "border-4 border-[#6F61EF] p-[0.625rem] px-[0.875rem] m-1" : "border-4 border-transparent p-3 px-4 m-1"}`}
                 >
                   {isFavorite && <span className="absolute top-2 right-2 text-yellow-400">⭐</span>}
                   {ch.name}
