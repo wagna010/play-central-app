@@ -100,6 +100,9 @@ const Home = () => {
           };
           localStorage.setItem('iptv_config', JSON.stringify(iptvConfig));
           console.log('✅ Configuração IPTV salva:', iptvConfig);
+          
+          // Buscar user_info e server_info imediatamente
+          await fetchIPTVData(iptvConfig);
         } else {
           console.warn('⚠️ Dados IPTV incompletos, não salvos');
         }
@@ -122,25 +125,9 @@ const Home = () => {
     }
   };
 
-  const loadIPTVCredentials = () => {
-    const savedConfig = localStorage.getItem('iptv_config');
-    
-    if (savedConfig) {
-      return JSON.parse(savedConfig);
-    }
-    return null;
-  };
-
-  const atualizarDadosConta = async (retryCount = 0): Promise<void> => {
+  const fetchIPTVData = async (config: { url: string; username: string; password: string }, retryCount = 0): Promise<void> => {
     try {
-      const config = loadIPTVCredentials();
-      
-      if (!config) {
-        console.warn('⚠️ Sem configuração IPTV salva ainda');
-        return;
-      }
-      
-      console.log(`🔄 Tentativa ${retryCount + 1} - Atualizando dados da conta IPTV...`);
+      console.log(`🔄 Tentativa ${retryCount + 1} - Buscando dados IPTV...`);
       
       const apiUrl = `http://${config.url}/player_api.php?username=${encodeURIComponent(config.username)}&password=${encodeURIComponent(config.password)}`;
       
@@ -164,7 +151,7 @@ const Home = () => {
         const exp = new Date(parseInt(data.user_info.exp_date) * 1000);
         localStorage.setItem('iptv_expire_at', exp.toISOString());
         setIptvExpDate(`IPTV: ${formatExpireDate(exp)}`);
-        console.log('✅ Dados IPTV atualizados com sucesso');
+        console.log('✅ Dados IPTV (user_info + server_info) salvos com sucesso');
       } else {
         console.warn('⚠️ Autenticação IPTV falhou');
         throw new Error('Autenticação falhou');
@@ -175,11 +162,29 @@ const Home = () => {
       if (retryCount < 2) {
         console.log(`⏳ Aguardando 2 segundos antes de tentar novamente...`);
         await new Promise(resolve => setTimeout(resolve, 2000));
-        return atualizarDadosConta(retryCount + 1);
+        return fetchIPTVData(config, retryCount + 1);
       } else {
-        console.error('❌ Todas as 3 tentativas falharam');
+        console.error('❌ Todas as 3 tentativas falharam ao buscar dados IPTV');
       }
     }
+  };
+
+  const loadIPTVCredentials = () => {
+    const savedConfig = localStorage.getItem('iptv_config');
+    
+    if (savedConfig) {
+      return JSON.parse(savedConfig);
+    }
+    return null;
+  };
+
+  const atualizarDadosConta = async () => {
+    const config = loadIPTVCredentials();
+    if (!config) {
+      console.warn('⚠️ Sem configuração IPTV salva');
+      return;
+    }
+    await fetchIPTVData(config);
   };
 
   const atualizarListasFilmes = async (force = false) => {
@@ -249,7 +254,6 @@ const Home = () => {
     const init = async () => {
       setIsLoadingIPTV(true);
       await initializePlayer();
-      await atualizarDadosConta();
       setIsLoadingIPTV(false);
     };
     init();
