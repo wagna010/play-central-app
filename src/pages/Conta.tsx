@@ -167,120 +167,193 @@ const Conta = () => {
   const playerStatus = checkPlayerStatus();
   const iptvStatus = checkIptvStatus();
 
-  return <div className="min-h-screen bg-cover bg-center bg-no-repeat flex flex-col items-center justify-start" style={{
-    backgroundImage: 'url(https://storage.googleapis.com/flutterflow-io-6f20.appspot.com/projects/smart-play-v4-j4pg65/assets/irov4jo6yrx9/background.jpg)'
-  }} onKeyDown={handleKeyDown}>
-      
-      <div className="bg-black/65 p-10 rounded-[20px] w-[600px] mt-[60px] flex flex-col items-center">
-        <h1 className="mb-6 text-[28px] text-center text-white">⚙️ Gerenciamento de Dispositivo</h1>
+  return (
+    <div 
+      className="min-h-screen bg-cover bg-center bg-no-repeat flex flex-col items-center justify-start px-4" 
+      style={{
+        backgroundImage: 'url(https://storage.googleapis.com/flutterflow-io-6f20.appspot.com/projects/smart-play-v4-j4pg65/assets/irov4jo6yrx9/background.jpg)'
+      }} 
+      onKeyDown={handleKeyDown}
+    >
+      <div className="bg-black/65 p-6 md:p-10 rounded-[20px] w-full max-w-6xl mt-[60px]">
+        <h1 className="mb-8 text-[28px] text-center text-white">⚙️ Gerenciamento de Dispositivo</h1>
         
-        {/* Código do Dispositivo */}
-        {deviceCode && (
-          <div className="w-full mb-6 pb-6 border-b border-white/20">
-            <label className="block text-white mb-2 text-sm font-semibold">📱 Código do Dispositivo</label>
-            <div className="w-full p-4 bg-white/10 rounded-lg text-center">
-              <span className="text-2xl font-mono tracking-widest text-white">{deviceCode}</span>
-            </div>
-          </div>
-        )}
-
-        {/* Status do Player e IPTV */}
-        <div className="w-full mb-6 pb-6 border-b border-white/20">
-          <div className="mb-4">
-            <label className="block text-white mb-2 text-sm font-semibold">🎮 Status do Player</label>
-            <div className={`p-3 rounded-lg ${playerStatus.isExpired ? 'bg-red-500/20 border border-red-500' : 'bg-green-500/20 border border-green-500'}`}>
-              <span className={playerStatus.isExpired ? 'text-red-300' : 'text-green-300'}>
-                {playerStatus.isExpired 
-                  ? `❌ Player Vencido desde ${formatExpireDate(playerStatus.expireAt)}`
-                  : `✅ Ativo até ${formatExpireDate(playerStatus.expireAt)} (${playerStatus.daysLeft} dias)`
-                }
-              </span>
-            </div>
-          </div>
+        {/* Grid de 2 colunas */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           
-          <div>
-            <label className="block text-white mb-2 text-sm font-semibold">📺 Vencimento IPTV</label>
-            <div className={`p-3 rounded-lg ${iptvStatus.isExpired ? 'bg-red-500/20 border border-red-500' : 'bg-blue-500/20 border border-blue-500'}`}>
-              <span className={iptvStatus.isExpired ? 'text-red-300' : 'text-blue-300'}>
-                {iptvStatus.isExpired 
-                  ? `❌ IPTV Vencido desde ${formatExpireDate(iptvStatus.expireAt)}`
-                  : `⏰ ${formatExpireDate(iptvStatus.expireAt)}`
-                }
-              </span>
+          {/* COLUNA ESQUERDA - IPTV */}
+          <div className="bg-cyan-500/5 border-2 border-cyan-500/30 rounded-xl p-6">
+            <h2 className="text-xl font-semibold text-cyan-300 mb-6 flex items-center gap-2">
+              📺 Configuração IPTV
+            </h2>
+
+            {/* Buscar Configuração Remota */}
+            <div className="mb-6">
+              <label className="block text-white mb-2 text-sm font-semibold">🔑 Buscar por Código</label>
+              <input 
+                ref={searchCodeRef} 
+                type="text" 
+                value={searchCode} 
+                onChange={e => setSearchCode(e.target.value.toUpperCase())} 
+                placeholder="AB12345678" 
+                maxLength={10} 
+                className="w-full p-3 mb-3 border-0 rounded-lg text-base outline-none focus:outline-cyan-400 focus:outline-2 uppercase font-mono tracking-wider" 
+              />
+              <button 
+                ref={searchButtonRef} 
+                onClick={handleCodeSearch} 
+                disabled={isSearching} 
+                className="w-full py-3 text-base border-0 rounded-lg bg-cyan-600 text-white cursor-pointer transition-all hover:bg-cyan-700 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-white focus:outline-2"
+              >
+                {isSearching ? '🔍 Buscando...' : '🔍 Buscar Configuração'}
+              </button>
+            </div>
+
+            <div className="w-full text-center text-white/50 mb-6 text-sm">
+              ─── ou configure manualmente ───
+            </div>
+
+            {/* Configuração Manual */}
+            <div className="space-y-3">
+              <label className="block text-white text-sm font-semibold">URL e Porta</label>
+              <div className="flex gap-3">
+                <input 
+                  ref={urlRef} 
+                  type="text" 
+                  value={url} 
+                  onChange={e => setUrl(e.target.value)} 
+                  placeholder="URL (ex: qetu.cc)" 
+                  className="flex-1 p-3 border-0 rounded-lg text-base outline-none focus:outline-cyan-400 focus:outline-2" 
+                />
+                <input 
+                  ref={portRef} 
+                  type="text" 
+                  value={port} 
+                  onChange={e => setPort(e.target.value)} 
+                  placeholder="Porta" 
+                  className="w-[100px] p-3 border-0 rounded-lg text-base outline-none focus:outline-cyan-400 focus:outline-2" 
+                />
+              </div>
+              
+              <label className="block text-white text-sm font-semibold mt-4">Usuário</label>
+              <input 
+                ref={usernameRef} 
+                type="text" 
+                value={username} 
+                onChange={e => setUsername(e.target.value)} 
+                placeholder="Usuário" 
+                className="w-full p-3 border-0 rounded-lg text-base outline-none focus:outline-cyan-400 focus:outline-2" 
+              />
+              
+              <label className="block text-white text-sm font-semibold mt-4">Senha</label>
+              <input 
+                ref={passwordRef} 
+                type="password" 
+                value={password} 
+                onChange={e => setPassword(e.target.value)} 
+                placeholder="Senha" 
+                className="w-full p-3 border-0 rounded-lg text-base outline-none focus:outline-cyan-400 focus:outline-2" 
+              />
+
+              <button 
+                ref={saveButtonRef} 
+                onClick={handleSaveManual} 
+                className="w-full py-3 text-base border-0 rounded-lg bg-cyan-600 text-white cursor-pointer transition-all hover:bg-cyan-700 mt-4 focus:outline-white focus:outline-2"
+              >
+                💾 Salvar Configuração
+              </button>
+
+              <button 
+                ref={clearButtonRef} 
+                onClick={handleClearConfig} 
+                className="w-full py-3 text-base border-0 rounded-lg bg-red-600 text-white cursor-pointer transition-all hover:bg-red-700 focus:outline-white focus:outline-2"
+              >
+                🔄 Limpar Configuração
+              </button>
+            </div>
+          </div>
+
+          {/* COLUNA DIREITA - PLAYER */}
+          <div className="bg-purple-500/5 border-2 border-purple-500/30 rounded-xl p-6">
+            <h2 className="text-xl font-semibold text-purple-300 mb-6 flex items-center gap-2">
+              🎮 Status do Player
+            </h2>
+
+            {/* Código do Dispositivo */}
+            {deviceCode && (
+              <div className="mb-6">
+                <label className="block text-white mb-2 text-sm font-semibold">📱 Código do Dispositivo</label>
+                <div className="w-full p-4 bg-white/10 rounded-lg text-center border border-purple-400/30">
+                  <span className="text-2xl font-mono tracking-widest text-white">{deviceCode}</span>
+                </div>
+              </div>
+            )}
+
+            {/* Status do Player */}
+            <div className="mb-6">
+              <label className="block text-white mb-2 text-sm font-semibold">🎮 Status do Player</label>
+              <div className={`p-3 rounded-lg ${playerStatus.isExpired ? 'bg-red-500/20 border border-red-500' : 'bg-green-500/20 border border-green-500'}`}>
+                <span className={playerStatus.isExpired ? 'text-red-300' : 'text-green-300'}>
+                  {playerStatus.isExpired 
+                    ? `❌ Player Vencido desde ${formatExpireDate(playerStatus.expireAt)}`
+                    : `✅ Ativo até ${formatExpireDate(playerStatus.expireAt)} (${playerStatus.daysLeft} dias)`
+                  }
+                </span>
+              </div>
+            </div>
+            
+            {/* Vencimento IPTV */}
+            <div className="mb-6">
+              <label className="block text-white mb-2 text-sm font-semibold">📺 Vencimento IPTV</label>
+              <div className={`p-3 rounded-lg ${iptvStatus.isExpired ? 'bg-red-500/20 border border-red-500' : 'bg-purple-500/20 border border-purple-500'}`}>
+                <span className={iptvStatus.isExpired ? 'text-red-300' : 'text-purple-300'}>
+                  {iptvStatus.isExpired 
+                    ? `❌ IPTV Vencido desde ${formatExpireDate(iptvStatus.expireAt)}`
+                    : `⏰ ${formatExpireDate(iptvStatus.expireAt)}`
+                  }
+                </span>
+              </div>
+            </div>
+
+            {/* Renovar Player */}
+            <div>
+              <label className="block text-white mb-2 text-sm font-semibold">💳 Renovação</label>
+              <button 
+                ref={renewButtonRef}
+                className="w-full py-3 text-base border-0 rounded-lg bg-gradient-to-r from-purple-600 to-blue-600 text-white cursor-not-allowed opacity-50 focus:outline-white focus:outline-2"
+                disabled
+              >
+                💰 Renovar com PIX - Em Breve
+              </button>
             </div>
           </div>
         </div>
 
-        {/* Renovar Player */}
-        <div className="w-full mb-6 pb-6 border-b border-white/20">
-          <label className="block text-white mb-2 text-sm font-semibold">💳 Renovar Player</label>
+        {/* Mensagem de Status e Botão Voltar */}
+        <div className="mt-6 flex flex-col items-center gap-4">
+          {message && (
+            <div className="w-full text-center text-sm bg-white/10 px-4 py-2 rounded-lg">
+              <span className={message.includes('❌') ? 'text-red-400' : message.includes('✅') ? 'text-green-400' : 'text-white'}>
+                {message}
+              </span>
+            </div>
+          )}
+          
           <button 
-            ref={renewButtonRef}
-            className="w-full py-[14px] text-lg border-0 rounded-lg bg-gradient-to-r from-purple-600 to-blue-600 text-white cursor-not-allowed opacity-50 focus:outline-white focus:outline-[3px]"
-            disabled
+            onClick={() => navigate('/')} 
+            className="w-full md:w-auto px-8 py-3 text-base border-0 rounded-lg bg-gray-600 text-white cursor-pointer transition-all hover:bg-gray-700 focus:outline-white focus:outline-2"
           >
-            💰 Renovar com PIX - Em Breve
+            ← Voltar ao Menu
           </button>
         </div>
-
-        {/* Buscar Configuração Remota */}
-        <div className="w-full mb-6 pb-6 border-b border-white/20">
-          <label className="block text-white mb-2 text-sm font-semibold">🔑 Buscar Configuração Remota</label>
-          <input 
-            ref={searchCodeRef} 
-            type="text" 
-            value={searchCode} 
-            onChange={e => setSearchCode(e.target.value.toUpperCase())} 
-            placeholder="AB12345678" 
-            maxLength={10} 
-            className="w-full p-3 mb-3 border-0 rounded-lg text-base outline-none focus:outline-[#6F61EF] focus:outline-2 uppercase font-mono tracking-wider" 
-          />
-          <button 
-            ref={searchButtonRef} 
-            onClick={handleCodeSearch} 
-            disabled={isSearching} 
-            className="w-full py-[14px] text-lg border-0 rounded-lg bg-[#6F61EF] text-white cursor-pointer transition-all hover:bg-[#5848d9] disabled:opacity-50 disabled:cursor-not-allowed focus:outline-white focus:outline-[3px]"
-          >
-            {isSearching ? '🔍 Buscando...' : '🔍 Buscar Configuração'}
-          </button>
-        </div>
-
-        <div className="w-full text-center text-white/50 mb-6 text-sm">
-          ─── ou configure manualmente ───
-        </div>
-
-        <div className="w-full flex gap-3 mb-4">
-          <input ref={urlRef} type="text" value={url} onChange={e => setUrl(e.target.value)} placeholder="URL (ex: qetu.cc)" className="flex-1 p-3 border-0 rounded-lg text-base outline-none focus:outline-[#00adee] focus:outline-2" />
-          <input ref={portRef} type="text" value={port} onChange={e => setPort(e.target.value)} placeholder="Porta" className="w-[100px] p-3 border-0 rounded-lg text-base outline-none focus:outline-[#00adee] focus:outline-2" />
-        </div>
-        
-        <input ref={usernameRef} type="text" value={username} onChange={e => setUsername(e.target.value)} placeholder="Usuário" className="w-full p-3 mb-4 border-0 rounded-lg text-base outline-none focus:outline-[#00adee] focus:outline-2" />
-        
-        <input ref={passwordRef} type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Senha" className="w-full p-3 mb-4 border-0 rounded-lg text-base outline-none focus:outline-[#00adee] focus:outline-2" />
-        
-        <button ref={saveButtonRef} onClick={handleSaveManual} className="w-full py-[14px] text-lg border-0 rounded-lg bg-[#00adee] text-white cursor-pointer transition-all hover:bg-[#0095cc] mb-3 focus:outline-white focus:outline-[3px]">
-          💾 Salvar Configuração
-        </button>
-
-        <button ref={clearButtonRef} onClick={handleClearConfig} className="w-full py-[14px] text-lg border-0 rounded-lg bg-red-600 text-white cursor-pointer transition-all hover:bg-red-700 mb-3 focus:outline-white focus:outline-[3px]">
-          🔄 Limpar Configuração
-        </button>
-
-        <button onClick={() => navigate('/')} className="w-full py-[14px] text-lg border-0 rounded-lg bg-gray-600 text-white cursor-pointer transition-all hover:bg-gray-700 focus:outline-white focus:outline-[3px]">
-          ← Voltar ao Menu
-        </button>
-        
-        {message && <div className="mt-4 text-center text-sm bg-white/10 px-4 py-2 rounded-lg">
-            <span className={message.includes('❌') ? 'text-red-400' : message.includes('✅') ? 'text-green-400' : 'text-white'}>
-              {message}
-            </span>
-          </div>}
       </div>
 
-      <div className="mt-6 text-white/50 text-xs text-center max-w-[600px]">
+      <div className="mt-6 text-white/50 text-xs text-center max-w-4xl px-4">
         💡 Use o código do dispositivo no painel administrativo para gerenciar remotamente.<br />
         Renovação via PIX será disponibilizada em breve.
       </div>
-    </div>;
+    </div>
+  );
 };
+
 export default Conta;
