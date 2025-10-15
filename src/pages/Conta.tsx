@@ -81,18 +81,25 @@ const Conta = () => {
       }
       const deviceData = data[0];
 
-      // Aplicar configuração encontrada
+      // Parse iptv_url que agora vem como "url:port"
+      const [iptvHost, iptvPort] = deviceData.iptv_url.split(':');
+      
       const config = {
-        url: deviceData.iptv_url,
-        port: deviceData.iptv_port,
+        url: iptvHost,
+        port: iptvPort || '8880',
         username: deviceData.iptv_username,
         password: deviceData.iptv_password
       };
+      
       localStorage.setItem('iptv_config', JSON.stringify(config));
       localStorage.setItem('player_expire_at', deviceData.player_expire_at);
       localStorage.setItem('iptv_expire_at', deviceData.iptv_expire_at);
-      setUrl(deviceData.iptv_url);
-      setPort(deviceData.iptv_port);
+      
+      // Atualizar device_code para o código buscado
+      localStorage.setItem('device_code', searchCode.toUpperCase());
+      
+      setUrl(iptvHost);
+      setPort(iptvPort || '8880');
       setUsername(deviceData.iptv_username);
       setPassword(deviceData.iptv_password);
       toast.success('Configuração aplicada com sucesso!');

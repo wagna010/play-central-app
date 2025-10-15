@@ -2,13 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useDeviceStatus } from '@/hooks/useDeviceStatus';
-
-const DEMO_CONFIG = {
-  url: 'qetu.cc',
-  port: '8880',
-  username: 'fullip',
-  password: '5904441732'
-};
+import { generateDeviceCode } from '@/utils/codeGenerator';
 
 const Home = () => {
   const navigate = useNavigate();
@@ -40,21 +34,29 @@ const Home = () => {
 
   const initializePlayer = async () => {
     let playerUuid = localStorage.getItem('player_uuid');
+    let deviceCode = localStorage.getItem('device_code');
     
+    // Gerar UUID se não existir
     if (!playerUuid) {
       playerUuid = crypto.randomUUID();
       localStorage.setItem('player_uuid', playerUuid);
       localStorage.setItem('player_first_access', new Date().toISOString());
     }
     
+    // Gerar código se não existir
+    if (!deviceCode) {
+      deviceCode = generateDeviceCode();
+    }
+    
     localStorage.setItem('player_last_access', new Date().toISOString());
 
-    // Registrar dispositivo no Supabase
+    // Registrar dispositivo com código gerado localmente
     try {
       const deviceModel = navigator.userAgent.split('(')[1]?.split(')')[0] || 'Unknown';
       const deviceOs = navigator.platform || 'Unknown';
       
       const { data, error } = await supabase.rpc('register_or_update_device', {
+        p_code: deviceCode,
         p_device_uuid: playerUuid,
         p_device_model: deviceModel,
         p_device_os: deviceOs,
@@ -70,7 +72,7 @@ const Home = () => {
       if (data && data.length > 0) {
         const deviceData = data[0];
         
-        // Salvar código gerado
+        // Salvar código confirmado pelo servidor
         localStorage.setItem('device_code', deviceData.device_code);
         
         // Verificar se player está bloqueado ou vencido
@@ -91,23 +93,27 @@ const Home = () => {
         setPlayerExpDate(`Player: ${formatExpireDate(playerExp)}`);
         setIptvExpDate(`IPTV: ${formatExpireDate(iptvExp)}`);
         
-        // Se tem configuração IPTV salva no Supabase, usar
-        if (deviceData.iptv_url) {
-          const iptvConfig = {
-            url: deviceData.iptv_url,
-            port: deviceData.iptv_port,
-            username: deviceData.iptv_username,
-            password: deviceData.iptv_password
-          };
-          localStorage.setItem('iptv_config', JSON.stringify(iptvConfig));
-        }
-
-        // Verificar se player está perto de vencer (3 dias)
-        const playerStatus = checkPlayerStatus();
-        if (playerStatus.daysLeft <= 3 && playerStatus.daysLeft > 0) {
-          setUserStatus(`⚠️ Player expira em ${playerStatus.daysLeft} dias`);
+        // Parse iptv_url que agora tem formato "url:port"
+        const [iptvHost, iptvPort] = deviceData.iptv_url.split(':');
+        const iptvConfig = {
+          url: iptvHost,
+          port: iptvPort || '8880',
+          username: deviceData.iptv_username,
+          password: deviceData.iptv_password
+        };
+        localStorage.setItem('iptv_config', JSON.stringify(iptvConfig));
+        
+        // Mostrar mensagem se for conta nova
+        if (deviceData.is_new_account) {
+          setUserStatus(`✨ Código: ${deviceData.device_code}`);
         } else {
-          setUserStatus(`Código: ${deviceData.device_code}`);
+          // Verificar se player está perto de vencer
+          const playerStatus = checkPlayerStatus();
+          if (playerStatus.daysLeft <= 3 && playerStatus.daysLeft > 0) {
+            setUserStatus(`⚠️ Player expira em ${playerStatus.daysLeft} dias`);
+          } else {
+            setUserStatus(`Código: ${deviceData.device_code}`);
+          }
         }
       }
     } catch (err) {
@@ -122,13 +128,18 @@ const Home = () => {
     if (savedConfig) {
       return JSON.parse(savedConfig);
     } else {
-      return DEMO_CONFIG;
+      return null;
     }
   };
 
   const atualizarDadosConta = async () => {
     try {
       const config = loadIPTVCredentials();
+      
+      if (!config) {
+        console.warn('Sem configuração IPTV');
+        return;
+      }
       
       const apiUrl = `http://${config.url}:${config.port}/player_api.php?username=${config.username}&password=${config.password}`;
       const res = await fetch(apiUrl);

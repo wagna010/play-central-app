@@ -24,7 +24,6 @@ export type Database = {
           id: string
           iptv_expire_at: string
           iptv_password: string | null
-          iptv_port: string | null
           iptv_url: string | null
           iptv_username: string | null
           is_blocked: boolean | null
@@ -41,7 +40,6 @@ export type Database = {
           id?: string
           iptv_expire_at: string
           iptv_password?: string | null
-          iptv_port?: string | null
           iptv_url?: string | null
           iptv_username?: string | null
           is_blocked?: boolean | null
@@ -58,7 +56,6 @@ export type Database = {
           id?: string
           iptv_expire_at?: string
           iptv_password?: string | null
-          iptv_port?: string | null
           iptv_url?: string | null
           iptv_username?: string | null
           is_blocked?: boolean | null
@@ -73,17 +70,12 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      generate_device_code: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
       get_device_by_code: {
         Args: { p_code: string }
         Returns: {
           device_uuid: string
           iptv_expire_at: string
           iptv_password: string
-          iptv_port: string
           iptv_url: string
           iptv_username: string
           is_blocked: boolean
@@ -92,6 +84,7 @@ export type Database = {
       }
       register_or_update_device: {
         Args: {
+          p_code: string
           p_device_model?: string
           p_device_os?: string
           p_device_uuid: string
@@ -101,10 +94,10 @@ export type Database = {
           device_code: string
           iptv_expire_at: string
           iptv_password: string
-          iptv_port: string
           iptv_url: string
           iptv_username: string
           is_blocked: boolean
+          is_new_account: boolean
           player_expire_at: string
         }[]
       }
