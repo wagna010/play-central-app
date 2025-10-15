@@ -207,9 +207,7 @@ const Conta = () => {
                 💾 Salvar Configuração
               </button>
 
-              <button ref={clearButtonRef} onClick={handleClearConfig} className="w-full py-3 text-base border-0 rounded-lg bg-red-600 text-white cursor-pointer transition-all hover:bg-red-700 focus:outline-white focus:outline-2">
-                🔄 Limpar Configuração
-              </button>
+              
             </div>
           </div>
 
