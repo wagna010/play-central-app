@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useDeviceStatus } from '@/hooks/useDeviceStatus';
 import { toast } from 'sonner';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 
 const Conta = () => {
   const navigate = useNavigate();
@@ -14,6 +16,8 @@ const Conta = () => {
   const [message, setMessage] = useState('');
   const [focusIndex, setFocusIndex] = useState(0);
   const [isSearching, setIsSearching] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [dialogSearchCode, setDialogSearchCode] = useState('');
 
   const {
     checkPlayerStatus,
@@ -21,16 +25,14 @@ const Conta = () => {
     formatExpireDate
   } = useDeviceStatus();
 
-  const searchCodeRef = useRef<HTMLInputElement>(null);
   const urlRef = useRef<HTMLInputElement>(null);
   const usernameRef = useRef<HTMLInputElement>(null);
   const passwordRef = useRef<HTMLInputElement>(null);
-  const searchButtonRef = useRef<HTMLButtonElement>(null);
   const saveButtonRef = useRef<HTMLButtonElement>(null);
   const clearButtonRef = useRef<HTMLButtonElement>(null);
   const renewButtonRef = useRef<HTMLButtonElement>(null);
 
-  const inputs = [searchCodeRef, searchButtonRef, urlRef, usernameRef, passwordRef, saveButtonRef, clearButtonRef, renewButtonRef];
+  const inputs = [urlRef, usernameRef, passwordRef, saveButtonRef, clearButtonRef, renewButtonRef];
 
   useEffect(() => {
     // Carregar código do dispositivo
@@ -177,10 +179,9 @@ const Conta = () => {
       setFocusIndex((focusIndex - 1 + inputs.length) % inputs.length);
     } else if (e.key === 'Enter') {
       e.preventDefault();
-      if (focusIndex === 1) handleCodeSearch();
-      else if (focusIndex === 5) handleSaveManual();
-      else if (focusIndex === 6) handleClearConfig();
-      else if (focusIndex === 7) navigate('/');
+      if (focusIndex === 3) handleSaveManual();
+      else if (focusIndex === 4) handleClearConfig();
+      else if (focusIndex === 5) navigate('/');
     } else if (e.key === 'Escape') {
       navigate('/');
     }
@@ -207,31 +208,20 @@ const Conta = () => {
               📺 Configuração IPTV
             </h2>
 
-            {/* Buscar Configuração Remota */}
-            <div className="mb-6">
-              <label className="block text-white mb-2 text-sm font-semibold">🔑 Buscar por Código</label>
-              <input 
-                ref={searchCodeRef}
-                type="text" 
-                value={searchCode} 
-                onChange={(e) => setSearchCode(e.target.value.toUpperCase())} 
-                placeholder="AB12345678" 
-                maxLength={10}
-                className="w-full p-3 mb-3 border-0 rounded-lg text-base outline-none focus:outline-cyan-400 focus:outline-2 uppercase font-mono tracking-wider"
-              />
-              <button 
-                ref={searchButtonRef}
-                onClick={handleCodeSearch} 
-                disabled={isSearching}
-                className="w-full py-3 text-base border-0 rounded-lg bg-cyan-600 text-white cursor-pointer transition-all hover:bg-cyan-700 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-white focus:outline-2"
-              >
-                {isSearching ? '🔍 Buscando...' : '🔍 Buscar Configuração'}
-              </button>
-            </div>
-
-            <div className="w-full text-center text-white/50 mb-6 text-sm">
-              ─── ou configure manualmente ───
-            </div>
+            {/* Vencimento IPTV - só aparece se config existir */}
+            {url && username && password && (
+              <div className="mb-6">
+                <label className="block text-white mb-2 text-sm font-semibold">📺 Vencimento IPTV</label>
+                <div className={`p-3 rounded-lg ${iptvStatus.isExpired ? 'bg-red-500/20 border border-red-500' : 'bg-cyan-500/20 border border-cyan-500'}`}>
+                  <span className={iptvStatus.isExpired ? 'text-red-300' : 'text-cyan-300'}>
+                    {iptvStatus.isExpired 
+                      ? `❌ IPTV Vencido desde ${formatExpireDate(iptvStatus.expireAt)}` 
+                      : `⏰ Vence em ${formatExpireDate(iptvStatus.expireAt)}`
+                    }
+                  </span>
+                </div>
+              </div>
+            )}
 
             {/* Configuração Manual */}
             <div className="space-y-3">
@@ -281,12 +271,58 @@ const Conta = () => {
               🎮 Status do Player
             </h2>
 
-            {/* Código do Dispositivo */}
+            {/* Código do Dispositivo com botão Recuperar */}
             {deviceCode && (
               <div className="mb-6">
                 <label className="block text-white mb-2 text-sm font-semibold">📱 Código do Dispositivo</label>
-                <div className="w-full p-4 bg-white/10 rounded-lg text-center border border-purple-400/30">
-                  <span className="text-2xl font-mono tracking-widest text-white">{deviceCode}</span>
+                <div className="flex gap-2">
+                  <div className="flex-1 p-4 bg-white/10 rounded-lg text-center border border-purple-400/30">
+                    <span className="text-2xl font-mono tracking-widest text-white">{deviceCode}</span>
+                  </div>
+                  
+                  <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button className="bg-purple-600 hover:bg-purple-700 text-white px-4">
+                        🔍
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="bg-gray-900 text-white border-purple-500/50">
+                      <DialogHeader>
+                        <DialogTitle className="text-2xl text-purple-300">🔍 Recuperar Configuração</DialogTitle>
+                        <DialogDescription className="text-gray-400">
+                          Digite o código do dispositivo para buscar a configuração
+                        </DialogDescription>
+                      </DialogHeader>
+                      
+                      <div className="space-y-4 mt-4">
+                        <input 
+                          type="text" 
+                          value={dialogSearchCode} 
+                          onChange={(e) => setDialogSearchCode(e.target.value.toUpperCase())} 
+                          placeholder="AB12345678" 
+                          maxLength={10}
+                          className="w-full p-3 border-0 rounded-lg text-base outline-none focus:outline-purple-400 focus:outline-2 uppercase font-mono tracking-wider text-black"
+                        />
+                        
+                        <Button 
+                          onClick={async () => {
+                            if (!validateCode(dialogSearchCode)) {
+                              toast.error('Código inválido. Use formato: AB12345678');
+                              return;
+                            }
+                            setSearchCode(dialogSearchCode);
+                            await handleCodeSearch();
+                            setIsDialogOpen(false);
+                            setDialogSearchCode('');
+                          }}
+                          disabled={isSearching}
+                          className="w-full py-3 bg-purple-600 hover:bg-purple-700 text-white"
+                        >
+                          {isSearching ? '🔍 Buscando...' : '🔍 Buscar'}
+                        </Button>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
                 </div>
               </div>
             )}
@@ -299,19 +335,6 @@ const Conta = () => {
                   {playerStatus.isExpired 
                     ? `❌ Player Vencido desde ${formatExpireDate(playerStatus.expireAt)}` 
                     : `✅ Ativo até ${formatExpireDate(playerStatus.expireAt)} (${playerStatus.daysLeft} dias)`
-                  }
-                </span>
-              </div>
-            </div>
-            
-            {/* Vencimento IPTV */}
-            <div className="mb-6">
-              <label className="block text-white mb-2 text-sm font-semibold">📺 Vencimento IPTV</label>
-              <div className={`p-3 rounded-lg ${iptvStatus.isExpired ? 'bg-red-500/20 border border-red-500' : 'bg-purple-500/20 border border-purple-500'}`}>
-                <span className={iptvStatus.isExpired ? 'text-red-300' : 'text-purple-300'}>
-                  {iptvStatus.isExpired 
-                    ? `❌ IPTV Vencido desde ${formatExpireDate(iptvStatus.expireAt)}` 
-                    : `⏰ ${formatExpireDate(iptvStatus.expireAt)}`
                   }
                 </span>
               </div>
