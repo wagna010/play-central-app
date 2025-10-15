@@ -33,33 +33,23 @@ const Home = () => {
   };
 
   const initializePlayer = async () => {
-    let playerUuid = localStorage.getItem('player_uuid');
     let deviceCode = localStorage.getItem('device_code');
-    
-    // Gerar UUID se não existir
-    if (!playerUuid) {
-      playerUuid = crypto.randomUUID();
-      localStorage.setItem('player_uuid', playerUuid);
-      localStorage.setItem('player_first_access', new Date().toISOString());
-    }
     
     // Gerar código se não existir
     if (!deviceCode) {
       deviceCode = generateDeviceCode();
+      localStorage.setItem('device_code', deviceCode);
     }
     
     localStorage.setItem('player_last_access', new Date().toISOString());
 
-    // Registrar dispositivo com código gerado localmente
+    // Registrar dispositivo
     try {
       const deviceModel = navigator.userAgent.split('(')[1]?.split(')')[0] || 'Unknown';
-      const deviceOs = navigator.platform || 'Unknown';
       
       const { data, error } = await supabase.rpc('register_or_update_device', {
         p_code: deviceCode,
-        p_device_uuid: playerUuid,
         p_device_model: deviceModel,
-        p_device_os: deviceOs,
         p_user_agent: navigator.userAgent
       });
 
@@ -93,15 +83,15 @@ const Home = () => {
         setPlayerExpDate(`Player: ${formatExpireDate(playerExp)}`);
         setIptvExpDate(`IPTV: ${formatExpireDate(iptvExp)}`);
         
-        // Parse iptv_url que agora tem formato "url:port"
-        const [iptvHost, iptvPort] = deviceData.iptv_url.split(':');
-        const iptvConfig = {
-          url: iptvHost,
-          port: iptvPort || '8880',
-          username: deviceData.iptv_username,
-          password: deviceData.iptv_password
-        };
-        localStorage.setItem('iptv_config', JSON.stringify(iptvConfig));
+        // Salvar config IPTV (URL já vem completa com porta)
+        if (deviceData.iptv_url && deviceData.iptv_username && deviceData.iptv_password) {
+          const iptvConfig = {
+            url: deviceData.iptv_url,
+            username: deviceData.iptv_username,
+            password: deviceData.iptv_password
+          };
+          localStorage.setItem('iptv_config', JSON.stringify(iptvConfig));
+        }
         
         // Mostrar mensagem
         if (deviceData.is_new_account) {
@@ -139,15 +129,14 @@ const Home = () => {
         return;
       }
       
-      const apiUrl = `http://${config.url}:${config.port}/player_api.php?username=${config.username}&password=${config.password}`;
+      const apiUrl = `http://${config.url}/player_api.php?username=${encodeURIComponent(config.username)}&password=${encodeURIComponent(config.password)}`;
       const res = await fetch(apiUrl);
       const data = await res.json();
 
       if (data?.user_info?.auth == 1) {
         localStorage.setItem('user_info', JSON.stringify(data.user_info));
         localStorage.setItem('server_info', JSON.stringify({
-          url: config.url,
-          port: config.port
+          url: config.url
         }));
         
         const exp = new Date(parseInt(data.user_info.exp_date) * 1000);
@@ -169,7 +158,7 @@ const Home = () => {
     const config = loadIPTVCredentials();
     if (!config) return;
     
-    const base = `http://${config.url}:${config.port}/player_api.php?username=${config.username}&password=${config.password}`;
+    const base = `http://${config.url}/player_api.php?username=${encodeURIComponent(config.username)}&password=${encodeURIComponent(config.password)}`;
     
     const [cat, str] = await Promise.all([
       fetch(`${base}&action=get_vod_categories`),
@@ -191,7 +180,7 @@ const Home = () => {
     const config = loadIPTVCredentials();
     if (!config) return;
     
-    const base = `http://${config.url}:${config.port}/player_api.php?username=${config.username}&password=${config.password}`;
+    const base = `http://${config.url}/player_api.php?username=${encodeURIComponent(config.username)}&password=${encodeURIComponent(config.password)}`;
     
     const [cat, str] = await Promise.all([
       fetch(`${base}&action=get_live_categories`),

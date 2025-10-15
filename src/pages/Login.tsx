@@ -43,7 +43,7 @@ const Login = () => {
     setMessage('Conectando...');
 
     try {
-      const apiUrl = `http://${url}/player_api.php?username=${username}&password=${password}`;
+      const apiUrl = `http://${url}/player_api.php?username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`;
       const response = await fetch(apiUrl);
       const data = await response.json();
 

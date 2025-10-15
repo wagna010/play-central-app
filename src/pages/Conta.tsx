@@ -9,7 +9,6 @@ const Conta = () => {
   const [deviceCode, setDeviceCode] = useState('');
   const [searchCode, setSearchCode] = useState('');
   const [url, setUrl] = useState('');
-  const [port, setPort] = useState('8880');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState('');
@@ -24,7 +23,6 @@ const Conta = () => {
 
   const searchCodeRef = useRef<HTMLInputElement>(null);
   const urlRef = useRef<HTMLInputElement>(null);
-  const portRef = useRef<HTMLInputElement>(null);
   const usernameRef = useRef<HTMLInputElement>(null);
   const passwordRef = useRef<HTMLInputElement>(null);
   const searchButtonRef = useRef<HTMLButtonElement>(null);
@@ -32,7 +30,7 @@ const Conta = () => {
   const clearButtonRef = useRef<HTMLButtonElement>(null);
   const renewButtonRef = useRef<HTMLButtonElement>(null);
 
-  const inputs = [searchCodeRef, searchButtonRef, urlRef, portRef, usernameRef, passwordRef, saveButtonRef, clearButtonRef, renewButtonRef];
+  const inputs = [searchCodeRef, searchButtonRef, urlRef, usernameRef, passwordRef, saveButtonRef, clearButtonRef, renewButtonRef];
 
   useEffect(() => {
     // Carregar código do dispositivo
@@ -46,7 +44,6 @@ const Conta = () => {
     if (savedConfig) {
       const config = JSON.parse(savedConfig);
       setUrl(config.url || '');
-      setPort(config.port || '8880');
       setUsername(config.username || '');
       setPassword(config.password || '');
     }
@@ -92,12 +89,9 @@ const Conta = () => {
 
       const deviceData = data[0];
 
-      // Parse iptv_url que agora vem como "url:port"
-      const [iptvHost, iptvPort] = deviceData.iptv_url.split(':');
-      
+      // URL já vem completa com porta
       const config = {
-        url: iptvHost,
-        port: iptvPort || '8880',
+        url: deviceData.iptv_url,
         username: deviceData.iptv_username,
         password: deviceData.iptv_password
       };
@@ -109,10 +103,9 @@ const Conta = () => {
       // Atualizar device_code para o código buscado
       localStorage.setItem('device_code', searchCode.toUpperCase());
       
-      setUrl(iptvHost);
-      setPort(iptvPort || '8880');
-      setUsername(deviceData.iptv_username);
-      setPassword(deviceData.iptv_password);
+      setUrl(deviceData.iptv_url || '');
+      setUsername(deviceData.iptv_username || '');
+      setPassword(deviceData.iptv_password || '');
 
       toast.success('Configuração aplicada com sucesso!');
       setMessage('✅ Configuração aplicada! Redirecionando...');
@@ -135,7 +128,6 @@ const Conta = () => {
 
     const config = {
       url,
-      port,
       username,
       password
     };
@@ -166,7 +158,6 @@ const Conta = () => {
     localStorage.removeItem('vod_streams');
 
     setUrl('');
-    setPort('8880');
     setUsername('');
     setPassword('');
     setSearchCode('');
@@ -187,9 +178,9 @@ const Conta = () => {
     } else if (e.key === 'Enter') {
       e.preventDefault();
       if (focusIndex === 1) handleCodeSearch();
-      else if (focusIndex === 6) handleSaveManual();
-      else if (focusIndex === 7) handleClearConfig();
-      else if (focusIndex === 8) navigate('/');
+      else if (focusIndex === 5) handleSaveManual();
+      else if (focusIndex === 6) handleClearConfig();
+      else if (focusIndex === 7) navigate('/');
     } else if (e.key === 'Escape') {
       navigate('/');
     }
@@ -244,25 +235,15 @@ const Conta = () => {
 
             {/* Configuração Manual */}
             <div className="space-y-3">
-              <label className="block text-white text-sm font-semibold">URL e Porta</label>
-              <div className="flex gap-3">
-                <input 
-                  ref={urlRef}
-                  type="text" 
-                  value={url} 
-                  onChange={(e) => setUrl(e.target.value)} 
-                  placeholder="URL (ex: qetu.cc)" 
-                  className="flex-1 p-3 border-0 rounded-lg text-base outline-none focus:outline-cyan-400 focus:outline-2"
-                />
-                <input 
-                  ref={portRef}
-                  type="text" 
-                  value={port} 
-                  onChange={(e) => setPort(e.target.value)} 
-                  placeholder="Porta" 
-                  className="w-[100px] p-3 border-0 rounded-lg text-base outline-none focus:outline-cyan-400 focus:outline-2"
-                />
-              </div>
+              <label className="block text-white text-sm font-semibold">URL com Porta</label>
+              <input 
+                ref={urlRef}
+                type="text" 
+                value={url} 
+                onChange={(e) => setUrl(e.target.value)} 
+                placeholder="url:porta (ex: qetu.cc:8880)" 
+                className="w-full p-3 border-0 rounded-lg text-base outline-none focus:outline-cyan-400 focus:outline-2"
+              />
               
               <label className="block text-white text-sm font-semibold mt-4">Usuário</label>
               <input 

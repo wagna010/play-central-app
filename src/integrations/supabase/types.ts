@@ -19,8 +19,6 @@ export type Database = {
           code: string
           created_at: string | null
           device_model: string | null
-          device_os: string | null
-          device_uuid: string
           id: string
           iptv_expire_at: string
           iptv_password: string | null
@@ -35,8 +33,6 @@ export type Database = {
           code: string
           created_at?: string | null
           device_model?: string | null
-          device_os?: string | null
-          device_uuid: string
           id?: string
           iptv_expire_at: string
           iptv_password?: string | null
@@ -51,8 +47,6 @@ export type Database = {
           code?: string
           created_at?: string | null
           device_model?: string | null
-          device_os?: string | null
-          device_uuid?: string
           id?: string
           iptv_expire_at?: string
           iptv_password?: string | null
@@ -73,7 +67,6 @@ export type Database = {
       get_device_by_code: {
         Args: { p_code: string }
         Returns: {
-          device_uuid: string
           iptv_expire_at: string
           iptv_password: string
           iptv_url: string
@@ -83,13 +76,7 @@ export type Database = {
         }[]
       }
       register_or_update_device: {
-        Args: {
-          p_code: string
-          p_device_model?: string
-          p_device_os?: string
-          p_device_uuid: string
-          p_user_agent?: string
-        }
+        Args: { p_code: string; p_device_model?: string; p_user_agent?: string }
         Returns: {
           device_code: string
           iptv_expire_at: string
