@@ -103,11 +103,10 @@ const Home = () => {
         };
         localStorage.setItem('iptv_config', JSON.stringify(iptvConfig));
         
-        // Mostrar mensagem se for conta nova
+        // Mostrar mensagem
         if (deviceData.is_new_account) {
-          setUserStatus(`✨ Código: ${deviceData.device_code}`);
+          setUserStatus(`✨ Nova conta: ${deviceData.device_code}`);
         } else {
-          // Verificar se player está perto de vencer
           const playerStatus = checkPlayerStatus();
           if (playerStatus.daysLeft <= 3 && playerStatus.daysLeft > 0) {
             setUserStatus(`⚠️ Player expira em ${playerStatus.daysLeft} dias`);
@@ -127,9 +126,8 @@ const Home = () => {
     
     if (savedConfig) {
       return JSON.parse(savedConfig);
-    } else {
-      return null;
     }
+    return null;
   };
 
   const atualizarDadosConta = async () => {
@@ -169,6 +167,8 @@ const Home = () => {
     if (!force && agora - ultimo < umDia && localStorage.getItem('vod_categories')) return;
     
     const config = loadIPTVCredentials();
+    if (!config) return;
+    
     const base = `http://${config.url}:${config.port}/player_api.php?username=${config.username}&password=${config.password}`;
     
     const [cat, str] = await Promise.all([
@@ -189,6 +189,8 @@ const Home = () => {
     if (!force && agora - ultimo < umDia && localStorage.getItem('tv_categories')) return;
     
     const config = loadIPTVCredentials();
+    if (!config) return;
+    
     const base = `http://${config.url}:${config.port}/player_api.php?username=${config.username}&password=${config.password}`;
     
     const [cat, str] = await Promise.all([
