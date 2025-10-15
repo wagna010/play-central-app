@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
+import { useDeviceStatus } from '@/hooks/useDeviceStatus';
 
 const DEMO_CONFIG = {
   url: 'qetu.cc',
@@ -12,8 +14,10 @@ const Home = () => {
   const navigate = useNavigate();
   const [focusIndex, setFocusIndex] = useState(1);
   const [inTopBar, setInTopBar] = useState(false);
-  const [expDate, setExpDate] = useState('Vencimento: --/--/---- --:--');
-  const [userStatus, setUserStatus] = useState('Demo Mode');
+  const [playerExpDate, setPlayerExpDate] = useState('Player: --/--/---- --:--');
+  const [iptvExpDate, setIptvExpDate] = useState('IPTV: --/--/---- --:--');
+  const [userStatus, setUserStatus] = useState('Iniciando...');
+  const { checkPlayerStatus, formatExpireDate } = useDeviceStatus();
 
   const icons = {
     tv: {
@@ -44,6 +48,72 @@ const Home = () => {
     }
     
     localStorage.setItem('player_last_access', new Date().toISOString());
+
+    // Registrar dispositivo no Supabase
+    try {
+      const deviceModel = navigator.userAgent.split('(')[1]?.split(')')[0] || 'Unknown';
+      const deviceOs = navigator.platform || 'Unknown';
+      
+      const { data, error } = await supabase.rpc('register_or_update_device', {
+        p_device_uuid: playerUuid,
+        p_device_model: deviceModel,
+        p_device_os: deviceOs,
+        p_user_agent: navigator.userAgent
+      });
+
+      if (error) {
+        console.error('Erro ao registrar dispositivo:', error);
+        setUserStatus('Erro no registro');
+        return;
+      }
+
+      if (data && data.length > 0) {
+        const deviceData = data[0];
+        
+        // Salvar código gerado
+        localStorage.setItem('device_code', deviceData.device_code);
+        
+        // Verificar se player está bloqueado ou vencido
+        const playerExpired = new Date(deviceData.player_expire_at) < new Date();
+        
+        if (deviceData.is_blocked || playerExpired) {
+          navigate('/conta');
+          return;
+        }
+        
+        // Salvar vencimentos
+        localStorage.setItem('player_expire_at', deviceData.player_expire_at);
+        localStorage.setItem('iptv_expire_at', deviceData.iptv_expire_at);
+        
+        // Atualizar UI com vencimentos
+        const playerExp = new Date(deviceData.player_expire_at);
+        const iptvExp = new Date(deviceData.iptv_expire_at);
+        setPlayerExpDate(`Player: ${formatExpireDate(playerExp)}`);
+        setIptvExpDate(`IPTV: ${formatExpireDate(iptvExp)}`);
+        
+        // Se tem configuração IPTV salva no Supabase, usar
+        if (deviceData.iptv_url) {
+          const iptvConfig = {
+            url: deviceData.iptv_url,
+            port: deviceData.iptv_port,
+            username: deviceData.iptv_username,
+            password: deviceData.iptv_password
+          };
+          localStorage.setItem('iptv_config', JSON.stringify(iptvConfig));
+        }
+
+        // Verificar se player está perto de vencer (3 dias)
+        const playerStatus = checkPlayerStatus();
+        if (playerStatus.daysLeft <= 3 && playerStatus.daysLeft > 0) {
+          setUserStatus(`⚠️ Player expira em ${playerStatus.daysLeft} dias`);
+        } else {
+          setUserStatus(`Código: ${deviceData.device_code}`);
+        }
+      }
+    } catch (err) {
+      console.error('Erro inesperado:', err);
+      setUserStatus('Modo Offline');
+    }
   };
 
   const loadIPTVCredentials = () => {
@@ -72,18 +142,11 @@ const Home = () => {
         }));
         
         const exp = new Date(parseInt(data.user_info.exp_date) * 1000);
-        const dia = exp.getDate().toString().padStart(2, '0');
-        const mes = (exp.getMonth() + 1).toString().padStart(2, '0');
-        const ano = exp.getFullYear();
-        const hora = exp.getHours().toString().padStart(2, '0');
-        const min = exp.getMinutes().toString().padStart(2, '0');
-        
-        setExpDate(`Vencimento: ${dia}/${mes}/${ano} ${hora}:${min}`);
-        setUserStatus(`Conectado: ${data.user_info.username}`);
+        localStorage.setItem('iptv_expire_at', exp.toISOString());
+        setIptvExpDate(`IPTV: ${formatExpireDate(exp)}`);
       }
     } catch (err) {
       console.error('Erro ao atualizar dados:', err);
-      setUserStatus('Demo Mode');
     }
   };
 
@@ -218,8 +281,11 @@ const Home = () => {
       </div>
 
       {/* Rodapé */}
-      <div className="absolute left-0 right-0 bottom-8 flex justify-between items-center px-12 text-2xl tracking-wide z-[2] pointer-events-none">
-        <div>{expDate}</div>
+      <div className="absolute left-0 right-0 bottom-8 flex justify-between items-center px-12 text-xl tracking-wide z-[2] pointer-events-none">
+        <div className="flex flex-col gap-1">
+          <div>{playerExpDate}</div>
+          <div>{iptvExpDate}</div>
+        </div>
         <div>{userStatus}</div>
       </div>
     </div>
