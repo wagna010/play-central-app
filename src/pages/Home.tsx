@@ -62,6 +62,13 @@ const Home = () => {
       if (data && data.length > 0) {
         const deviceData = data[0];
         
+        console.log('🔍 Dados recebidos do servidor:', {
+          url: deviceData.iptv_url,
+          username: deviceData.iptv_username,
+          password: deviceData.iptv_password,
+          is_new: deviceData.is_new_account
+        });
+        
         // Salvar código confirmado pelo servidor
         localStorage.setItem('device_code', deviceData.device_code);
         
@@ -91,6 +98,9 @@ const Home = () => {
             password: deviceData.iptv_password
           };
           localStorage.setItem('iptv_config', JSON.stringify(iptvConfig));
+          console.log('✅ Configuração IPTV salva:', iptvConfig);
+        } else {
+          console.warn('⚠️ Dados IPTV incompletos, não salvos');
         }
         
         // Mostrar mensagem
@@ -125,9 +135,11 @@ const Home = () => {
       const config = loadIPTVCredentials();
       
       if (!config) {
-        console.warn('Sem configuração IPTV');
+        console.warn('⚠️ Sem configuração IPTV salva ainda');
         return;
       }
+      
+      console.log('🔄 Atualizando dados da conta IPTV...');
       
       const apiUrl = `http://${config.url}/player_api.php?username=${encodeURIComponent(config.username)}&password=${encodeURIComponent(config.password)}`;
       const res = await fetch(apiUrl);
@@ -142,9 +154,12 @@ const Home = () => {
         const exp = new Date(parseInt(data.user_info.exp_date) * 1000);
         localStorage.setItem('iptv_expire_at', exp.toISOString());
         setIptvExpDate(`IPTV: ${formatExpireDate(exp)}`);
+        console.log('✅ Dados IPTV atualizados com sucesso');
+      } else {
+        console.warn('⚠️ Autenticação IPTV falhou');
       }
     } catch (err) {
-      console.error('Erro ao atualizar dados:', err);
+      console.error('❌ Erro ao atualizar dados IPTV:', err);
     }
   };
 
@@ -212,8 +227,11 @@ const Home = () => {
   };
 
   useEffect(() => {
-    initializePlayer();
-    atualizarDadosConta();
+    const init = async () => {
+      await initializePlayer();
+      await atualizarDadosConta();
+    };
+    init();
   }, []);
 
   useEffect(() => {
