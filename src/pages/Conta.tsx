@@ -136,9 +136,8 @@ const Conta = () => {
     
     localStorage.setItem('iptv_config', JSON.stringify(config));
     
-    // Limpar cache
+    // Limpar cache (server_info não é mais necessário)
     localStorage.removeItem('user_info');
-    localStorage.removeItem('server_info');
     localStorage.removeItem('tv_categories');
     localStorage.removeItem('tv_streams');
     localStorage.removeItem('vod_categories');
@@ -153,7 +152,7 @@ const Conta = () => {
   const handleClearConfig = () => {
     localStorage.removeItem('iptv_config');
     localStorage.removeItem('user_info');
-    localStorage.removeItem('server_info');
+    // server_info não é mais necessário
     localStorage.removeItem('tv_categories');
     localStorage.removeItem('tv_streams');
     localStorage.removeItem('vod_categories');

@@ -23,11 +23,14 @@ interface EPGItem {
 const TV = () => {
   const navigate = useNavigate();
 
+  // Carregar config IPTV da fonte única
+  const iptv_config = JSON.parse(localStorage.getItem("iptv_config") || "{}");
+  const username = iptv_config.username || "";
+  const password = iptv_config.password || "";
+  const baseURL = `http://${iptv_config.url}`;
+
+  // user_info usado apenas para dados adicionais da API (exp_date, etc)
   const user_info = JSON.parse(localStorage.getItem("user_info") || "{}");
-  const server_info = JSON.parse(localStorage.getItem("server_info") || "{}");
-  const username = user_info.username || "";
-  const password = user_info.password || "";
-  const baseURL = `http://${server_info.url}`;
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [channels, setChannels] = useState<Channel[]>([]);
@@ -57,7 +60,7 @@ const TV = () => {
   const channelRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   useEffect(() => {
-    if (!username || !server_info.url) {
+    if (!username || !iptv_config.url) {
       alert("Erro: dados do login não encontrados.");
       navigate("/");
       return;
@@ -87,7 +90,7 @@ const TV = () => {
     // Carregar favoritos no state
     const favs = JSON.parse(localStorage.getItem("fav_channels") || "[]");
     setFavorites(favs);
-  }, [navigate, username, server_info.url]);
+  }, [navigate, username, iptv_config.url]);
 
   useEffect(() => {
     const script = document.createElement("script");

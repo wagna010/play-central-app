@@ -142,20 +142,18 @@ const Home = () => {
       
       const data = await res.json();
 
-      if (data?.user_info?.auth == 1) {
-        localStorage.setItem('user_info', JSON.stringify(data.user_info));
-        localStorage.setItem('server_info', JSON.stringify({
-          url: config.url
-        }));
-        
-        const exp = new Date(parseInt(data.user_info.exp_date) * 1000);
-        localStorage.setItem('iptv_expire_at', exp.toISOString());
-        setIptvExpDate(`IPTV: ${formatExpireDate(exp)}`);
-        console.log('✅ Dados IPTV (user_info + server_info) salvos com sucesso');
-      } else {
-        console.warn('⚠️ Autenticação IPTV falhou');
-        throw new Error('Autenticação falhou');
-      }
+        if (data?.user_info?.auth == 1) {
+          localStorage.setItem('user_info', JSON.stringify(data.user_info));
+          // server_info removido - usar iptv_config.url
+          
+          const exp = new Date(parseInt(data.user_info.exp_date) * 1000);
+          localStorage.setItem('iptv_expire_at', exp.toISOString());
+          setIptvExpDate(`IPTV: ${formatExpireDate(exp)}`);
+          console.log('✅ Dados IPTV (user_info) salvos com sucesso');
+        } else {
+          console.warn('⚠️ Autenticação IPTV falhou');
+          throw new Error('Autenticação falhou');
+        }
     } catch (err) {
       console.error(`❌ Tentativa ${retryCount + 1} falhou:`, err);
       

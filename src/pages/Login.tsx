@@ -48,8 +48,9 @@ const Login = () => {
       const data = await response.json();
 
       if (data && data.user_info && data.user_info.auth == 1) {
+        // Salvar apenas user_info - usar iptv_config como fonte única
         localStorage.setItem('user_info', JSON.stringify(data.user_info));
-        localStorage.setItem('server_info', JSON.stringify(data.server_info));
+        // server_info removido - usar iptv_config
         navigate('/home');
       } else {
         setMessage('Usuário ou senha inválidos.');

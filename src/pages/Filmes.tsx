@@ -21,11 +21,14 @@ const Filmes = () => {
   const PLACEHOLDER_ACTOR =
     "https://www.themoviedb.org/assets/2/v4/glyphicons/basic/glyphicons-basic-4-user-grey-d8fe957375e70239d6abdd549fd7568c89281b2179b5f4470e2e12895792dfa5.svg";
 
+  // Carregar config IPTV da fonte única
+  const iptv_config = JSON.parse(localStorage.getItem("iptv_config") || "{}");
+  const username = iptv_config.username || "";
+  const password = iptv_config.password || "";
+  const baseURL = `http://${iptv_config.url || "qetu.cc:8880"}`;
+
+  // user_info usado apenas para dados adicionais da API (exp_date, etc)
   const user_info = JSON.parse(localStorage.getItem("user_info") || "{}");
-  const server_info = JSON.parse(localStorage.getItem("server_info") || "{}");
-  const username = user_info.username || "";
-  const password = user_info.password || "";
-  const baseURL = `http://${server_info.url || "qetu.cc:8880"}`;
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [movies, setMovies] = useState<Movie[]>([]);
