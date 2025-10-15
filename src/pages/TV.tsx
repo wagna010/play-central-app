@@ -27,7 +27,7 @@ const TV = () => {
   const server_info = JSON.parse(localStorage.getItem("server_info") || "{}");
   const username = user_info.username || "";
   const password = user_info.password || "";
-  const baseURL = `${server_info.server_protocol || "http"}://${server_info.url}:${server_info.port}`;
+  const baseURL = `http://${server_info.url}`;
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [channels, setChannels] = useState<Channel[]>([]);

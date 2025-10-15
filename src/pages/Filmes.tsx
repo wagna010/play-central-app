@@ -25,7 +25,7 @@ const Filmes = () => {
   const server_info = JSON.parse(localStorage.getItem("server_info") || "{}");
   const username = user_info.username || "";
   const password = user_info.password || "";
-  const baseURL = `${server_info.server_protocol || "http"}://${server_info.url || "qetu.cc"}:${server_info.port || "8880"}`;
+  const baseURL = `http://${server_info.url || "qetu.cc:8880"}`;
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [movies, setMovies] = useState<Movie[]>([]);
