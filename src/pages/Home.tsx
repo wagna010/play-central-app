@@ -11,6 +11,7 @@ const Home = () => {
   const [playerExpDate, setPlayerExpDate] = useState('Player: --/--/---- --:--');
   const [iptvExpDate, setIptvExpDate] = useState('IPTV: --/--/---- --:--');
   const [userStatus, setUserStatus] = useState('Iniciando...');
+  const [isLoadingIPTV, setIsLoadingIPTV] = useState(false);
   const { checkPlayerStatus, formatExpireDate } = useDeviceStatus();
 
   const icons = {
@@ -130,7 +131,7 @@ const Home = () => {
     return null;
   };
 
-  const atualizarDadosConta = async () => {
+  const atualizarDadosConta = async (retryCount = 0): Promise<void> => {
     try {
       const config = loadIPTVCredentials();
       
@@ -139,10 +140,19 @@ const Home = () => {
         return;
       }
       
-      console.log('🔄 Atualizando dados da conta IPTV...');
+      console.log(`🔄 Tentativa ${retryCount + 1} - Atualizando dados da conta IPTV...`);
       
       const apiUrl = `http://${config.url}/player_api.php?username=${encodeURIComponent(config.username)}&password=${encodeURIComponent(config.password)}`;
-      const res = await fetch(apiUrl);
+      
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
+      
+      const res = await fetch(apiUrl, { 
+        signal: controller.signal,
+        mode: 'cors'
+      });
+      clearTimeout(timeoutId);
+      
       const data = await res.json();
 
       if (data?.user_info?.auth == 1) {
@@ -157,9 +167,18 @@ const Home = () => {
         console.log('✅ Dados IPTV atualizados com sucesso');
       } else {
         console.warn('⚠️ Autenticação IPTV falhou');
+        throw new Error('Autenticação falhou');
       }
     } catch (err) {
-      console.error('❌ Erro ao atualizar dados IPTV:', err);
+      console.error(`❌ Tentativa ${retryCount + 1} falhou:`, err);
+      
+      if (retryCount < 2) {
+        console.log(`⏳ Aguardando 2 segundos antes de tentar novamente...`);
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        return atualizarDadosConta(retryCount + 1);
+      } else {
+        console.error('❌ Todas as 3 tentativas falharam');
+      }
     }
   };
 
@@ -228,8 +247,10 @@ const Home = () => {
 
   useEffect(() => {
     const init = async () => {
+      setIsLoadingIPTV(true);
       await initializePlayer();
       await atualizarDadosConta();
+      setIsLoadingIPTV(false);
     };
     init();
   }, []);
@@ -299,6 +320,14 @@ const Home = () => {
           </div>
         ))}
       </div>
+
+      {/* Loading Indicator */}
+      {isLoadingIPTV && (
+        <div className="absolute top-8 left-1/2 -translate-x-1/2 bg-black/80 px-6 py-3 rounded-lg z-[4] flex items-center gap-3">
+          <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+          <span className="text-white text-lg">Carregando dados do servidor...</span>
+        </div>
+      )}
 
       {/* Rodapé */}
       <div className="absolute left-0 right-0 bottom-8 flex justify-between items-center px-12 text-xl tracking-wide z-[2] pointer-events-none">
