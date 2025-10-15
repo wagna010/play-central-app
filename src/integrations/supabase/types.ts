@@ -14,13 +14,100 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      devices: {
+        Row: {
+          code: string
+          created_at: string | null
+          device_model: string | null
+          device_os: string | null
+          device_uuid: string
+          id: string
+          iptv_expire_at: string
+          iptv_password: string | null
+          iptv_port: string | null
+          iptv_url: string | null
+          iptv_username: string | null
+          is_blocked: boolean | null
+          last_access_at: string | null
+          player_expire_at: string
+          user_agent: string | null
+        }
+        Insert: {
+          code: string
+          created_at?: string | null
+          device_model?: string | null
+          device_os?: string | null
+          device_uuid: string
+          id?: string
+          iptv_expire_at: string
+          iptv_password?: string | null
+          iptv_port?: string | null
+          iptv_url?: string | null
+          iptv_username?: string | null
+          is_blocked?: boolean | null
+          last_access_at?: string | null
+          player_expire_at: string
+          user_agent?: string | null
+        }
+        Update: {
+          code?: string
+          created_at?: string | null
+          device_model?: string | null
+          device_os?: string | null
+          device_uuid?: string
+          id?: string
+          iptv_expire_at?: string
+          iptv_password?: string | null
+          iptv_port?: string | null
+          iptv_url?: string | null
+          iptv_username?: string | null
+          is_blocked?: boolean | null
+          last_access_at?: string | null
+          player_expire_at?: string
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      generate_device_code: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      get_device_by_code: {
+        Args: { p_code: string }
+        Returns: {
+          device_uuid: string
+          iptv_expire_at: string
+          iptv_password: string
+          iptv_port: string
+          iptv_url: string
+          iptv_username: string
+          is_blocked: boolean
+          player_expire_at: string
+        }[]
+      }
+      register_or_update_device: {
+        Args: {
+          p_device_model?: string
+          p_device_os?: string
+          p_device_uuid: string
+          p_user_agent?: string
+        }
+        Returns: {
+          device_code: string
+          iptv_expire_at: string
+          iptv_password: string
+          iptv_port: string
+          iptv_url: string
+          iptv_username: string
+          is_blocked: boolean
+          player_expire_at: string
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never
